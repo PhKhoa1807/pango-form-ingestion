@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+
+/* Bảng màu dark theme port từ bản HTML gốc -> Tailwind v4 design tokens.
+   Mỗi --color-* tạo ra các utility tương ứng: bg-card, text-muted, border-line... */
+@theme {
+  --color-bg: #0f1115;
+  --color-card: #1a1d24;
+  --color-card2: #232730;
+  --color-line: #2e333d;
+  --color-txt: #e6e8ec;
+  --color-muted: #9aa1ac;
+  --color-accent: #6c5ce7;
+  --color-accent2: #8b7bff;
+  --color-ok: #2ecc71;
+  --color-err: #ff5c5c;
+  --color-warn: #ffb84d;
+
+  --font-mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-txt);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
