@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VSON · Nhập đơn → Pango Ingest</title>
+<style>
+  :root {
+    --bg: #0f1115; --card: #1a1d24; --card2: #232730; --line: #2e333d;
+    --txt: #e6e8ec; --muted: #9aa1ac; --accent: #6c5ce7; --accent2: #8b7bff;
+    --ok: #2ecc71; --err: #ff5c5c; --warn: #ffb84d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt);
+    font: 14px/1.5 "Segoe UI", system-ui, sans-serif; padding: 24px; }
+  .wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 18px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 12px; color: var(--accent2); }
+  .sub { color: var(--muted); margin: 0 0 8px; font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px; }
+  details.card > summary { cursor: pointer; color: var(--accent2);
+    font-weight: 600; font-size: 15px; list-style: none; }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary::before { content: "▸ "; }
+  details.card[open] > summary::before { content: "▾ "; }
+  .grid { display: grid; gap: 12px; }
+  .grid2 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  label .req { color: var(--err); }
+  input, textarea { width: 100%; background: var(--card2); border: 1px solid var(--line);
+    color: var(--txt); border-radius: 8px; padding: 9px 11px; font: inherit; }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 90px; font-family: ui-monospace, "Cascadia Code", monospace; font-size: 12px; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  button { background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 10px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+  button:hover { background: var(--accent2); }
+  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--txt); }
+  button.ghost:hover { border-color: var(--accent); background: var(--card2); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .badge.ok { color: var(--ok); border-color: var(--ok); }
+  .badge.err { color: var(--err); border-color: var(--err); }
+  pre { background: #0c0e12; border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px; overflow: auto; font-family: ui-monospace, monospace; font-size: 12px;
+    margin: 0; max-height: 360px; }
+  .result-ok { border-color: var(--ok); }
+  .result-err { border-color: var(--err); }
+  .statusline { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  code { background: var(--card2); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+  .tokenbox { word-break: break-all; font-size: 11px; color: var(--muted); }
+  table.items { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 13px; }
+  table.items th, table.items td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; }
+  table.items th { background: var(--card2); color: var(--muted); font-weight: 600; font-size: 12px; }
+  table.items td.num, table.items th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.items td.empty { text-align: center; color: var(--muted); padding: 16px; }
+  table.items .del { color: var(--err); cursor: pointer; background: none; border: none; font-size: 16px; padding: 0 4px; }
+  table.items .del:hover { color: #ff8888; }
+  .addrow { display: grid; grid-template-columns: 1fr 1.6fr 1fr .8fr auto; gap: 8px; align-items: end; margin-top: 14px; }
+  @media (max-width: 640px) { .addrow { grid-template-columns: 1fr 1fr; } }
+  .totalbar { display: flex; justify-content: flex-end; align-items: baseline; gap: 12px; margin-top: 14px; font-size: 15px; }
+  .totalbar b { font-size: 22px; color: var(--ok); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div>
+    <h1>📥 Nhập đơn → Pango Data Ingestion</h1>
+    <p class="sub">Form nhập tay → gọi API Pango ingest vào Model <code id="momLabel">M-HY2SR-O-C6HCK-M</code></p>
+  </div>
+
+  <!-- ============ CẤU HÌNH ============ -->
+  <details class="card" id="cfgCard">
+    <summary>⚙️ Cấu hình kết nối Pango</summary>
+    <div class="grid" style="margin-top:16px;">
+      <div class="grid grid2">
+        <div>
+          <label>OrgId <span class="req">*</span></label>
+          <input id="orgId" value="c093bd1b34a977ff1c62602749d59984" />
+        </div>
+        <div>
+          <label>AppId <span class="req">*</span></label>
+          <input id="appId" value="GUKOZ8G4JO6WXA74D01YY8EPQQOBYALX4AG" />
+        </div>
+      </div>
+      <div class="grid grid2">
+        <div>
+          <label>Account <span class="req">*</span></label>
+          <input id="account" value="KHOAVSON1" />
+        </div>
+        <div>
+          <label>MOM Code <span class="req">*</span></label>
+          <input id="momCode" value="M-HY2SR-O-C6HCK-M" />
+        </div>
+      </div>
+      <div>
+        <label>Refresh Token <span class="req">*</span></label>
+        <input id="refreshToken" value="pango-ANY1u0qExsybbCVbMtEBlnCnv-mXk7HincshmVY80G6AGtOQ5VPGjcKrnFlZQ.xSh1SanurWDBFnLV7KxluxdMWEgkI6-acn" />
+      </div>
+      <div>
+        <label>Source <span class="req">*</span></label>
+        <input id="source" value="VSON Partner Training" />
+      </div>
+      <div class="row">
+        <button class="ghost" onclick="saveCfg()">💾 Lưu cấu hình</button>
+        <span id="cfgSaved" class="hint"></span>
+      </div>
+    </div>
+  </details>
+
+  <!-- ============ THÔNG TIN KHÁCH HÀNG & ĐƠN ============ -->
+  <div class="card">
+    <h2>👤 Thông tin khách hàng &amp; đơn</h2>
+    <div class="grid grid2">
+      <div>
+        <label>Tên khách hàng (customerName) <span class="req">*</span></label>
+        <input id="f_name" placeholder="Nguyễn Văn A" />
+      </div>
+      <div>
+        <label>Mã khách hàng (customerId)</label>
+        <input id="f_cusid" placeholder="KH001" />
+      </div>
+      <div>
+        <label>Email khách hàng (customerEmail)</label>
+        <input id="f_email" placeholder="a@example.com" />
+      </div>
+      <div>
+        <label>Số điện thoại (customerPhone)</label>
+        <input id="f_phone" placeholder="0901234567" />
+      </div>
+      <div>
+        <label>Mã đơn (orderId) <span class="req">*</span></label>
+        <input id="f_orderId" placeholder="DH-0001" />
+        <div class="hint">Dùng làm gốc refId (mỗi SP: orderId-mãSP)</div>
+      </div>
+      <div>
+        <label>Trạng thái đơn (orderStatus)</label>
+        <input id="f_orderStatus" placeholder="Mới / Đã giao..." />
+      </div>
+      <div>
+        <label>Ngày đặt đơn (orderDate)</label>
+        <input id="f_orderDate" type="datetime-local" />
+        <div class="hint">Để trống = thời điểm hiện tại</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SẢN PHẨM TRONG ĐƠN ============ -->
+  <div class="card">
+    <h2>📦 Sản phẩm trong đơn</h2>
+    <table class="items">
+      <thead>
+        <tr>
+          <th style="width:34px">#</th>
+          <th>Mã SP</th>
+          <th>Tên sản phẩm</th>
+          <th class="num">Đơn giá</th>
+          <th class="num">Số lượng</th>
+          <th class="num">Thành tiền</th>
+          <th style="width:36px"></th>
+        </tr>
+      </thead>
+      <tbody id="prodBody"></tbody>
+    </table>
+
+    <!-- Hàng nhập sản phẩm mới -->
+    <div class="addrow">
+      <div>
+        <label>Mã SP</label>
+        <input id="a_pid" placeholder="SP-001" />
+      </div>
+      <div>
+        <label>Tên sản phẩm</label>
+        <input id="a_pname" placeholder="Sản phẩm A" />
+      </div>
+      <div>
+        <label>Đơn giá</label>
+        <input id="a_price" type="number" placeholder="120" />
+      </div>
+      <div>
+        <label>Số lượng</label>
+        <input id="a_qty" type="number" placeholder="1" value="1" />
+      </div>
+      <div>
+        <button onclick="addProduct()">+ Thêm</button>
+      </div>
+    </div>
+
+    <div class="totalbar">
+      <span>Tổng tiền (<span id="prodCount">0</span> SP):</span>
+      <b id="grandTotal">0</b>
+    </div>
+
+    <div class="row" style="margin-top:16px;">
+      <button id="btnPush" onclick="execute()">🚀 Gửi lên Pango</button>
+      <button class="ghost" onclick="previewPayload()">👁 Xem trước Payload</button>
+      <button class="ghost" onclick="clearForm()">Xóa hết</button>
+    </div>
+  </div>
+
+  <!-- ============ PAYLOAD PREVIEW ============ -->
+  <div class="card" id="previewCard" style="display:none;">
+    <h2>📦 Request Payload</h2>
+    <pre id="previewBox"></pre>
+  </div>
+
+  <!-- ============ RESPONSE ============ -->
+  <div class="card" id="respCard" style="display:none;">
+    <h2>📨 Response Result</h2>
+    <div id="respStatus" class="statusline"></div>
+    <pre id="respBox"></pre>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+// 6 trường lưu cấu hình (hiển thị trong UI)
+const CFG_KEYS = ['orgId','appId','account','refreshToken','momCode','source'];
+// Giá trị kỹ thuật cố định (không hiển thị)
+const AUTH_BASE   = 'https://account.mydatalakes.com/api/v1.0/auth-app';   // + /{orgId}/authen
+const INGEST_URL  = 'https://svc.mydatalakes.com/dhub-i/api/v2.0/ingest';
+const PROXY_BASE  = 'http://localhost:8787';
+const TOKEN_HEADER = 'AccessToken';   // Pango v2.0: AccessToken: Bearer <token>
+const OBJECT_TYPE  = 'custom-model';
+let TOKEN = '';
+
+// Goi API qua proxy local (tranh CORS)
+function apiFetch(targetUrl, opts) {
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers, { 'x-target-url': targetUrl });
+  return fetch(PROXY_BASE + '/forward', {
+    method: opts.method || 'GET', headers, body: opts.body
+  });
+}
+
+// ---- Cấu hình: load/save localStorage ----
+function loadCfg() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('vson_cfg_v2') || '{}');
+    CFG_KEYS.forEach(k => { if (saved[k] != null && $(k)) $(k).value = saved[k]; });
+  } catch (e) {}
+  $('momLabel').textContent = $('momCode').value;
+}
+function saveCfg() {
+  const obj = {};
+  CFG_KEYS.forEach(k => obj[k] = $(k).value);
+  localStorage.setItem('vson_cfg_v2', JSON.stringify(obj));
+  $('momLabel').textContent = $('momCode').value;
+  $('cfgSaved').textContent = '✓ Đã lưu lúc ' + new Date().toLocaleTimeString();
+  setTimeout(() => $('cfgSaved').textContent = '', 3000);
+}
+
+// ---- Lấy token ngầm (đổi refreshToken -> accessToken) ----
+async function fetchToken() {
+  const authUrl = AUTH_BASE + '/' + $('orgId').value.trim() + '/authen';
+  const res = await apiFetch(authUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'refreshToken': $('refreshToken').value.trim()
+    },
+    body: JSON.stringify({ appId: $('appId').value.trim(), account: $('account').value.trim() })
+  });
+  const json = await res.json().catch(() => ({}));
+  const tok = json?.data?.accessToken || json?.accessToken || json?.data?.token
+           || json?.token || json?.data?.access_token || '';
+  if (!tok) throw new Error('Không lấy được token từ response auth: ' + JSON.stringify(json));
+  return tok;
+}
+
+// ---- Quản lý danh sách sản phẩm ----
+let PRODUCTS = [];   // { pid, pname, price, qty }
+const money = n => (n || 0).toLocaleString('vi-VN');
+const lineTotal = p => (p.price || 0) * (p.qty || 0);
+
+function addProduct() {
+  const pid   = $('a_pid').value.trim();
+  const pname = $('a_pname').value.trim();
+  const price = parseInt($('a_price').value, 10);
+  const qty   = parseInt($('a_qty').value, 10);
+  if (!pname && !pid) { alert('Nhập ít nhất Mã SP hoặc Tên sản phẩm.'); return; }
+  if (isNaN(price) || price < 0) { alert('Đơn giá không hợp lệ.'); return; }
+  if (isNaN(qty) || qty <= 0) { alert('Số lượng phải > 0.'); return; }
+  PRODUCTS.push({ pid, pname, price, qty });
+  ['a_pid','a_pname','a_price'].forEach(id => $(id).value = '');
+  $('a_qty').value = '1';
+  $('a_pid').focus();
+  renderProducts();
+}
+
+function removeProduct(i) { PRODUCTS.splice(i, 1); renderProducts(); }
+
+function renderProducts() {
+  const body = $('prodBody');
+  if (!PRODUCTS.length) {
+    body.innerHTML = '<tr><td class="empty" colspan="7">Chưa có sản phẩm — thêm ở ô bên dưới.</td></tr>';
+  } else {
+    body.innerHTML = PRODUCTS.map((p, i) =>
+      '<tr>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + esc(p.pid || '—') + '</td>' +
+        '<td>' + esc(p.pname || '—') + '</td>' +
+        '<td class="num">' + money(p.price) + '</td>' +
+        '<td class="num">' + p.qty + '</td>' +
+        '<td class="num">' + money(lineTotal(p)) + '</td>' +
+        '<td><button class="del" title="Xóa" onclick="removeProduct(' + i + ')">✕</button></td>' +
+      '</tr>'
+    ).join('');
+  }
+  const grand = PRODUCTS.reduce((s, p) => s + lineTotal(p), 0);
+  $('grandTotal').textContent = money(grand);
+  $('prodCount').textContent = PRODUCTS.length;
+}
+
+// ---- Build payload: mỗi sản phẩm = 1 record ----
+function buildPayload() {
+  const now = Date.now();
+  const orderId = $('f_orderId').value.trim();
+  const od = $('f_orderDate').value;
+  const orderTs = od ? new Date(od).getTime() : now;
+
+  const baseTexts = {};
+  const addT = (k, id) => { const v = $(id).value.trim(); if (v !== '') baseTexts[k] = v; };
+  addT('customField01', 'f_name');         // customerName
+  addT('customField02', 'f_cusid');        // customerId
+  addT('customField03', 'f_phone');        // customerPhone
+  addT('customField04', 'f_orderId');      // orderId
+  addT('customField05', 'f_orderStatus');  // orderStatus
+  addT('customField06', 'f_email');        // customerEmail
+
+  const entries = PRODUCTS.map((p, i) => {
+    const texts = Object.assign({}, baseTexts);
+    if (p.pname) texts.customField07 = p.pname;            // productName
+    if (p.pid)   texts.customField08 = p.pid;              // productId
+    texts.customField09 = String(lineTotal(p));            // TotalCost = thành tiền dòng
+    return {
+      momCode: $('momCode').value.trim(),
+      refId: orderId + '-' + (p.pid || (i + 1)),           // refId duy nhất mỗi SP
+      customFieldTexts: texts,
+      customFieldLongs: { customFieldLong01: p.price, customFieldLong02: p.qty },
+      customFieldTimestamps: { customFieldTimestamp01: orderTs },
+      createdAt: now,
+      updatedAt: now,
+      recordStatus: 'Active'
+    };
+  });
+
+  return { objectType: OBJECT_TYPE, source: $('source').value.trim(), entries };
+}
+
+function previewPayload() {
+  $('previewCard').style.display = 'block';
+  $('previewBox').textContent = JSON.stringify(buildPayload(), null, 2);
+}
+
+// ---- Push lên Pango: tự lấy token rồi ingest ----
+async function execute() {
+  if (!$('f_name').value.trim()) { alert('Tên khách hàng là bắt buộc.'); return; }
+  if (!$('f_orderId').value.trim()) { alert('Mã đơn (orderId) là bắt buộc — dùng làm gốc refId.'); return; }
+  if (!PRODUCTS.length) { alert('Đơn phải có ít nhất 1 sản phẩm.'); return; }
+
+  const payload = buildPayload();
+  previewPayload();
+
+  const btn = $('btnPush');
+  btn.disabled = true; btn.textContent = 'Đang push...';
+  $('respCard').style.display = 'block';
+  $('respStatus').textContent = '⏳ Đang lấy token...';
+  $('respBox').className = '';
+  $('respBox').textContent = '';
+
+  try {
+    // 1) Tự lấy token mới
+    TOKEN = await fetchToken();
+
+    // 2) Push data
+    $('respStatus').textContent = '⏳ Đang gửi dữ liệu...';
+    const headers = { 'Content-Type': 'application/json', 'OrgId': $('orgId').value.trim() };
+    headers[TOKEN_HEADER] = 'Bearer ' + TOKEN;
+
+    const res = await apiFetch(INGEST_URL, {
+      method: 'POST', headers, body: JSON.stringify(payload)
+    });
+    const text = await res.text();
+    let json; try { json = JSON.parse(text); } catch { json = text; }
+    const ok = (json && json.success === true) || (res.ok && json && json.success !== false);
+    $('respBox').className = ok ? 'result-ok' : 'result-err';
+    $('respStatus').innerHTML = ok
+      ? '<span style="color:var(--ok)">✅ THÀNH CÔNG — ' + esc(json.message || 'success: true') + '</span>'
+      : '<span style="color:var(--err)">❌ THẤT BẠI — HTTP ' + res.status + ' / ' + esc(json.message || json.errorMessage || ('success: ' + (json && json.success))) + '</span>';
+    $('respBox').textContent = typeof json === 'string' ? json : JSON.stringify(json, null, 2);
+  } catch (e) {
+    $('respBox').className = 'result-err';
+    $('respStatus').innerHTML = '<span style="color:var(--err)">❌ Lỗi</span>';
+    $('respBox').innerHTML = errHtml(e);
+  } finally {
+    btn.disabled = false; btn.textContent = '🚀 Gửi lên Pango';
+  }
+}
+
+function clearForm() {
+  ['f_orderId','f_orderStatus','f_orderDate','f_name','f_cusid','f_email','f_phone'].forEach(id => $(id).value = '');
+  PRODUCTS = [];
+  renderProducts();
+  $('previewCard').style.display = 'none';
+}
+
+// ---- helpers ----
+function setBadge(id, txt, cls) { const e = $(id); e.textContent = txt; e.className = 'badge' + (cls ? ' ' + cls : ''); }
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function errHtml(e) {
+  return '<span style="color:var(--err)">' + esc(e.message) + '</span>'
+    + '<div class="hint">Nếu là lỗi CORS/Failed to fetch: trình duyệt chặn gọi thẳng tới domain Pango. '
+    + 'Cần một backend proxy nhỏ, hoặc tạm tắt CORS để test.</div>';
+}
+
+// Enter ở các ô thêm SP = thêm nhanh
+window.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && ['a_pid','a_pname','a_price','a_qty'].includes(document.activeElement.id)) {
+    e.preventDefault(); addProduct();
+  }
+});
+
+loadCfg();
+renderProducts();
+</script>
+</body>
+</html>
