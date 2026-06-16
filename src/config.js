@@ -20,5 +20,4 @@ export const EMPTY_CUSTOMER = {
   phone: '',
   orderId: '',
   orderStatus: '',
-  orderDate: '',
 }

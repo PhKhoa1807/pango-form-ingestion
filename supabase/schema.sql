@@ -30,6 +30,11 @@ create table if not exists public.customers (
 alter table public.customers drop constraint if exists customers_customer_code_key;
 alter table public.customers add constraint customers_customer_code_key unique (customer_code);
 
+-- Số điện thoại là khóa nhận diện khách -> mỗi SĐT chỉ 1 khách.
+-- Dùng partial unique index (where phone is not null) để vẫn cho phép dòng NULL.
+create unique index if not exists customers_phone_key
+  on public.customers (phone) where phone is not null;
+
 -- ------------------------------------------------------------
 -- 2) ĐƠN HÀNG
 -- ------------------------------------------------------------

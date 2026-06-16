@@ -41,7 +41,7 @@ export async function fetchToken(cfg) {
 export function buildPayload(cfg, customer, products) {
   const now = Date.now()
   const orderId = customer.orderId.trim()
-  const orderTs = customer.orderDate ? new Date(customer.orderDate).getTime() : now
+  const orderTs = now // ngày giờ đặt đơn = thời điểm bấm đẩy lên Pango
 
   const baseTexts = {}
   const addT = (k, v) => {

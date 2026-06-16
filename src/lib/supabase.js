@@ -15,29 +15,44 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const supabase = url && anonKey ? createClient(url, anonKey) : null
 export const supabaseEnabled = Boolean(supabase)
 
+// ---- Tra cứu khách hàng theo số điện thoại ----
+// Trả về bản ghi khách { id, name, email, customer_code, phone } nếu có, ngược lại null.
+export async function findCustomerByPhone(phone) {
+  if (!supabase) return null
+  const p = phone?.trim()
+  if (!p) return null
+  const { data, error } = await supabase
+    .from('customers')
+    .select('id, name, email, customer_code, phone')
+    .eq('phone', p)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw new Error('Tra cứu khách hàng lỗi: ' + error.message)
+  return data || null
+}
+
 // ---- Lưu 1 đơn (khách + đơn + sản phẩm) vào Supabase ----
 // Trả về { order_id } khi thành công, ném lỗi khi thất bại.
 export async function saveOrderToSupabase(customer, products) {
   if (!supabase) throw new Error('Chưa cấu hình Supabase (thiếu VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).')
 
-  // 1) Khách hàng: có mã KH thì upsert theo customer_code, không thì insert mới.
-  const cusCode = customer.cusid?.trim() || null
-  const cusRow = {
-    name: customer.name.trim(),
-    customer_code: cusCode,
-    email: customer.email?.trim() || null,
-    phone: customer.phone?.trim() || null,
-  }
+  // 1) Khách hàng: nhận diện theo số điện thoại để không tạo trùng.
+  //    Chỉ ghi các trường có giá trị -> tránh xóa trắng dữ liệu cũ khi để trống.
+  const phone = customer.phone?.trim() || null
+  const cusRow = { name: customer.name.trim(), phone }
+  const email = customer.email?.trim()
+  const cusCode = customer.cusid?.trim()
+  if (email) cusRow.email = email
+  if (cusCode) cusRow.customer_code = cusCode
 
   let customerId
-  if (cusCode) {
-    const { data, error } = await supabase
-      .from('customers')
-      .upsert(cusRow, { onConflict: 'customer_code' })
-      .select('id')
-      .single()
-    if (error) throw new Error('Lưu khách hàng lỗi: ' + error.message)
-    customerId = data.id
+  const existing = phone ? await findCustomerByPhone(phone) : null
+  if (existing) {
+    // Đã có khách với SĐT này -> cập nhật thông tin mới nhất, dùng lại id.
+    const { error } = await supabase.from('customers').update(cusRow).eq('id', existing.id)
+    if (error) throw new Error('Cập nhật khách hàng lỗi: ' + error.message)
+    customerId = existing.id
   } else {
     const { data, error } = await supabase
       .from('customers')
@@ -53,7 +68,7 @@ export async function saveOrderToSupabase(customer, products) {
     customer_id: customerId,
     order_code: customer.orderId.trim(),
     status: customer.orderStatus?.trim() || null,
-    order_date: customer.orderDate ? new Date(customer.orderDate).toISOString() : new Date().toISOString(),
+    order_date: new Date().toISOString(), // tự lấy giờ hiện tại lúc lưu/đẩy
   }
   const { data: order, error: orderErr } = await supabase
     .from('orders')
