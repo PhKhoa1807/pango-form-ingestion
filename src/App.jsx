@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CFG_KEYS, DEFAULT_CFG, CFG_STORAGE_KEY, EMPTY_CUSTOMER } from './config.js'
 import { buildPayload, pushToPango } from './lib/pango.js'
+import { saveOrderToSupabase, supabaseEnabled } from './lib/supabase.js'
 import ConfigCard from './components/ConfigCard.jsx'
 import CustomerForm from './components/CustomerForm.jsx'
 import ProductsTable from './components/ProductsTable.jsx'
@@ -50,8 +51,27 @@ export default function App() {
     setResult({ statusMsg: '⏳ Đang lấy token & gửi dữ liệu...' })
 
     try {
+      // Lưu vào Supabase (sổ lưu trữ nội bộ) — không chặn việc push Pango nếu lỗi.
+      let dbMsg = ''
+      if (supabaseEnabled) {
+        try {
+          setResult({ statusMsg: '⏳ Đang lưu vào Supabase...' })
+          await saveOrderToSupabase(customer, products)
+          dbMsg = '✅ Đã lưu Supabase. '
+        } catch (dbErr) {
+          dbMsg = '⚠️ Lưu Supabase lỗi: ' + dbErr.message + '. '
+        }
+      }
+
+      setResult({ statusMsg: dbMsg + '⏳ Đang push lên Pango...' })
       const r = await pushToPango(cfg, p)
-      setResult(r)
+      setResult({ ...r, statusMsg: dbMsg })
+      // Gửi thành công -> xóa hết data đã nhập (giữ lại Response để xem kết quả)
+      if (r.ok) {
+        setCustomer(EMPTY_CUSTOMER)
+        setProducts([])
+        setPayload(null)
+      }
     } catch (e) {
       setResult({ error: e.message })
     } finally {

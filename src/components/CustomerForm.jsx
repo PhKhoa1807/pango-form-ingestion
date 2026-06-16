@@ -8,29 +8,29 @@ export default function CustomerForm({ customer, setCustomer }) {
     <Card>
       <h2 className="mb-3 text-[15px] text-accent2">👤 Thông tin khách hàng &amp; đơn</h2>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Tên khách hàng (customerName)" required>
+        <Field label="Tên khách hàng" required>
           <TextInput value={customer.name} onChange={upd('name')} placeholder="Nguyễn Văn A" />
         </Field>
-        <Field label="Mã khách hàng (customerId)">
+        <Field label="Mã khách hàng">
           <TextInput value={customer.cusid} onChange={upd('cusid')} placeholder="KH001" />
         </Field>
-        <Field label="Email khách hàng (customerEmail)">
+        <Field label="Email khách hàng">
           <TextInput value={customer.email} onChange={upd('email')} placeholder="a@example.com" />
         </Field>
-        <Field label="Số điện thoại (customerPhone)">
+        <Field label="Số điện thoại">
           <TextInput value={customer.phone} onChange={upd('phone')} placeholder="0901234567" />
         </Field>
-        <Field label="Mã đơn (orderId)" required hint="Dùng làm gốc refId (mỗi SP: orderId-mãSP)">
+        <Field label="Mã đơn" required>
           <TextInput value={customer.orderId} onChange={upd('orderId')} placeholder="DH-0001" />
         </Field>
-        <Field label="Trạng thái đơn (orderStatus)">
+        <Field label="Trạng thái đơn">
           <TextInput
             value={customer.orderStatus}
             onChange={upd('orderStatus')}
             placeholder="Mới / Đã giao..."
           />
         </Field>
-        <Field label="Ngày đặt đơn (orderDate)" hint="Để trống = thời điểm hiện tại">
+        <Field label="Ngày đặt đơn">
           <TextInput
             type="datetime-local"
             value={customer.orderDate}

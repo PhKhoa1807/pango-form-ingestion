@@ -16,19 +16,24 @@ export function PreviewCard({ payload }) {
 export function ResponseCard({ result }) {
   if (!result) return null
   const { ok, status, json, error, statusMsg } = result
+  // Đã có kết quả Pango khi có json/error; lúc đó statusMsg chỉ là dòng phụ (vd: trạng thái lưu Supabase).
+  const hasResult = error != null || json != null
   const body =
     error != null
       ? error
       : typeof json === 'string'
         ? json
-        : JSON.stringify(json, null, 2)
+        : json != null
+          ? JSON.stringify(json, null, 2)
+          : null
 
   return (
     <Card>
       <h2 className="mb-3 text-[15px] text-accent2">📨 Response Result</h2>
+      {statusMsg && <div className="mb-1 text-[13px] text-muted">{statusMsg}</div>}
       <div className="mb-2 text-[13px] font-semibold">
-        {statusMsg ? (
-          <span className="text-muted">{statusMsg}</span>
+        {!hasResult ? (
+          statusMsg ? null : <span className="text-muted">⏳ Đang xử lý...</span>
         ) : error != null ? (
           <span className="text-err">❌ Lỗi</span>
         ) : ok ? (
