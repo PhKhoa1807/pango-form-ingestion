@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Card, Field, TextInput, Select } from './ui.jsx'
+import { Card, Field, TextInput } from './ui.jsx'
+import { Combobox } from './Combobox.jsx'
 import {
   findCustomerByPhone,
   nextCustomerCode,
@@ -37,9 +38,7 @@ export default function CustomerForm({ customer, setCustomer }) {
     }
   }, [customer.province, customer.district, customer.ward])
 
-  const onProvinceChange = async (e) => {
-    const code = e.target.value
-    const name = provinces.find((p) => String(p.code) === code)?.name || ''
+  const onProvinceChange = async (code, name) => {
     setGeo({ provinceCode: code, districtCode: '', wardCode: '' })
     setDistricts([])
     setWards([])
@@ -53,9 +52,7 @@ export default function CustomerForm({ customer, setCustomer }) {
     }
   }
 
-  const onDistrictChange = async (e) => {
-    const code = e.target.value
-    const name = districts.find((d) => String(d.code) === code)?.name || ''
+  const onDistrictChange = async (code, name) => {
     setGeo((g) => ({ ...g, districtCode: code, wardCode: '' }))
     setWards([])
     setCustomer((c) => ({ ...c, district: name, ward: '' }))
@@ -68,9 +65,7 @@ export default function CustomerForm({ customer, setCustomer }) {
     }
   }
 
-  const onWardChange = (e) => {
-    const code = e.target.value
-    const name = wards.find((w) => String(w.code) === code)?.name || ''
+  const onWardChange = (code, name) => {
     setGeo((g) => ({ ...g, wardCode: code }))
     setCustomer((c) => ({ ...c, ward: name }))
   }
@@ -196,39 +191,33 @@ export default function CustomerForm({ customer, setCustomer }) {
           />
         </Field>
         <Field label="Tỉnh / Thành phố" required>
-          <Select size="sm" value={geo.provinceCode} onChange={onProvinceChange}>
-            <option value="">-- Chọn Tỉnh/Thành --</option>
-            {provinces.map((p) => (
-              <option key={p.code} value={p.code}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
+          <Combobox
+            size="sm"
+            value={geo.provinceCode}
+            onChange={onProvinceChange}
+            options={provinces}
+            placeholder="Gõ hoặc chọn Tỉnh/Thành"
+          />
         </Field>
         <Field label="Quận / Huyện" required>
-          <Select
+          <Combobox
             size="sm"
             value={geo.districtCode}
             onChange={onDistrictChange}
+            options={districts}
             disabled={!geo.provinceCode}
-          >
-            <option value="">-- Chọn Quận/Huyện --</option>
-            {districts.map((d) => (
-              <option key={d.code} value={d.code}>
-                {d.name}
-              </option>
-            ))}
-          </Select>
+            placeholder="Gõ hoặc chọn Quận/Huyện"
+          />
         </Field>
         <Field label="Phường / Xã" required>
-          <Select size="sm" value={geo.wardCode} onChange={onWardChange} disabled={!geo.districtCode}>
-            <option value="">-- Chọn Phường/Xã --</option>
-            {wards.map((w) => (
-              <option key={w.code} value={w.code}>
-                {w.name}
-              </option>
-            ))}
-          </Select>
+          <Combobox
+            size="sm"
+            value={geo.wardCode}
+            onChange={onWardChange}
+            options={wards}
+            disabled={!geo.districtCode}
+            placeholder="Gõ hoặc chọn Phường/Xã"
+          />
         </Field>
       </div>
       {geoErr && <div className="mt-2 text-[11px] text-err">⚠️ Lỗi tải địa giới: {geoErr}</div>}
