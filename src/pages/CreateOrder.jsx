@@ -80,14 +80,14 @@ export default function CreateOrder({ cfg }) {
 
       <Card className="!p-0 !border-0 !bg-transparent !shadow-none">
         <div className="flex flex-wrap items-center gap-[10px]">
-          <Button onClick={handleExecute} disabled={busy}>
-            {busy ? 'Đang push...' : '🚀 Gửi lên Pango'}
+          <Button variant="lime" onClick={handleExecute} disabled={busy}>
+            {busy ? 'Đang push...' : 'Gửi lên Pango'}
           </Button>
           <Button variant="ghost" onClick={handlePreview}>
             👁 Xem trước Payload
           </Button>
-          <Button variant="ghost" onClick={handleClear}>
-            Xóa hết
+          <Button className="shadow-sm" variant="ghost" onClick={handleClear}>
+            Xóa form
           </Button>
         </div>
       </Card>

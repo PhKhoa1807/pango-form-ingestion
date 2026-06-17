@@ -41,7 +41,7 @@ export default function CustomerForm({ customer, setCustomer }) {
 
   return (
     <Card>
-      <h2 className="mb-3 text-[15px] text-accent2">👤 Thông tin khách hàng &amp; đơn</h2>
+      <h2 className="mb-3 text-[15px] text-accent2 font-bold">👤 Thông tin khách hàng &amp; đơn</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Số điện thoại" required>
           <TextInput

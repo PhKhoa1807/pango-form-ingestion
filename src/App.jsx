@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CFG_KEYS, DEFAULT_CFG, CFG_STORAGE_KEY } from './config.js'
 import { MENU } from './nav.js'
+import Sidebar from './components/Sidebar.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import CreateOrder from './pages/CreateOrder.jsx'
 import Settings from './pages/Settings.jsx'
@@ -45,18 +46,11 @@ export default function App() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mx-auto max-w-[90%]">
-        {view !== 'dashboard' && (
-          <button
-            onClick={() => setView('dashboard')}
-            className="mb-4 inline-flex cursor-pointer items-center gap-1 rounded-lg border border-line bg-card px-3 py-[7px] text-[13px] text-txt shadow-sm transition-colors hover:border-accent hover:bg-card2"
-          >
-            ← Trang chủ
-          </button>
-        )}
-        {renderView()}
-      </div>
+    <div className="flex h-screen overflow-hidden bg-bg">
+      <Sidebar view={view} onNavigate={setView} />
+      <main className="no-scrollbar flex-1 overflow-auto p-6">
+        <div className="mx-auto max-w-[1100px]">{renderView()}</div>
+      </main>
     </div>
   )
 }

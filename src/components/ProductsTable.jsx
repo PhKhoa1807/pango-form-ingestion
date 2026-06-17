@@ -37,7 +37,7 @@ export default function ProductsTable({ products, setProducts }) {
 
   return (
     <Card>
-      <h2 className="mb-3 text-[15px] text-accent2">📦 Sản phẩm trong đơn</h2>
+      <h2 className="mb-3 text-[15px] text-accent2 font-bold">📦 Sản phẩm trong đơn</h2>
       <table className="mt-[6px] w-full border-collapse text-[13px]">
         <thead>
           <tr>
@@ -98,7 +98,9 @@ export default function ProductsTable({ products, setProducts }) {
         <Field label="Số lượng">
           <TextInput type="number" value={row.qty} onChange={upd('qty')} placeholder="1" />
         </Field>
-        <Button onClick={addProduct}>+ Thêm</Button>
+        <Button variant="lime" onClick={addProduct}>
+          + Thêm
+        </Button>
       </div>
 
       <div className="mt-[14px] flex items-baseline justify-end gap-3 text-[15px]">

@@ -34,6 +34,7 @@ export function Button({ variant = 'primary', className = '', ...props }) {
     'disabled:cursor-not-allowed transition-colors'
   const variants = {
     primary: 'bg-accent text-white border-none shadow-sm hover:bg-accent2 hover:shadow-md',
+    lime: 'bg-[#A0E870] text-[#1f2933] border-none shadow-sm hover:bg-[#8fdd5c] hover:shadow-md',
     ghost: 'bg-transparent border border-line text-txt hover:border-accent hover:bg-card2',
   }
   return <button {...props} className={`${base} ${variants[variant]} ${className}`} />

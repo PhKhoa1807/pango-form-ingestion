@@ -1,5 +1,14 @@
-// Danh sách các phần (module) của ứng dụng — dùng cho Dashboard và điều hướng.
+// Danh sách các phần (module) của ứng dụng — dùng cho sidebar và điều hướng.
+
+// Nhóm "Menu" chính.
 export const MENU = [
+  {
+    key: 'dashboard',
+    title: 'Dashboard',
+    icon: '🏠',
+    desc: 'Tổng quan & lối tắt vào các phần',
+    ready: true,
+  },
   {
     key: 'create-order',
     title: 'Tạo đơn hàng',
@@ -35,6 +44,10 @@ export const MENU = [
     desc: 'Danh sách & thông tin khách hàng',
     ready: false,
   },
+]
+
+// Nhóm "Preference" (dưới cùng sidebar).
+export const PREFERENCE = [
   {
     key: 'settings',
     title: 'Thiết lập',

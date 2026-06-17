@@ -1,20 +1,19 @@
 import { MENU } from '../nav.js'
-import logo from '../access/image/Logo-Images-04.jpg'
 
-// Màn hình chính: lưới 6 ô, bấm vào ô nào điều hướng vào phần đó.
+// Màn hình chính: lưới các ô module, bấm vào ô nào điều hướng vào phần đó.
 export default function Dashboard({ onNavigate }) {
+  // Bỏ chính mục "dashboard" — không cần ô tự trỏ về trang hiện tại.
+  const tiles = MENU.filter((m) => m.key !== 'dashboard')
+
   return (
     <div>
-      <div className="mb-6 flex items-center gap-3">
-        <img src={logo} alt="VSON" className="h-12 w-12 rounded-xl object-contain" />
-        <div>
-          <h1 className="mb-1 text-xl font-bold">VSON · Nhập thông tin</h1>
-          <p className="m-0 text-[13px] text-muted">Chọn một phần để bắt đầu</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="mb-1 text-xl font-bold">Dashboard</h1>
+        <p className="m-0 text-[13px] text-muted">Chọn một phần để bắt đầu</p>
       </div>
 
-      <div className="mx-auto grid max-w-[70%] grid-cols-3 gap-15">
-        {MENU.map((m) => (
+      <div className="grid grid-cols-2 gap-5 lg:grid-cols-3">
+        {tiles.map((m) => (
           <button
             key={m.key}
             onClick={() => onNavigate(m.key)}
