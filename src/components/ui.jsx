@@ -32,6 +32,16 @@ export function TextInput({ size = 'md', className = '', ...props }) {
   return <input {...props} className={`${inputBase} ${inputSizes[size]} ${className}`} />
 }
 
+// Dropdown chọn (dùng style giống TextInput). disabled -> mờ + không cho chọn.
+export function Select({ size = 'md', className = '', ...props }) {
+  return (
+    <select
+      {...props}
+      className={`${inputBase} ${inputSizes[size]} cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+    />
+  )
+}
+
 export function Button({ variant = 'primary', size = 'md', className = '', ...props }) {
   const base =
     'rounded-lg font-semibold cursor-pointer disabled:opacity-50 ' +

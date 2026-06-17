@@ -21,6 +21,7 @@ export const EMPTY_CUSTOMER = {
   orderId: '',
   orderStatus: '',
   address: '',
+  province: '',
   district: '',
   ward: '',
 }

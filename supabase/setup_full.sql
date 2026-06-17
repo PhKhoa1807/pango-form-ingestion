@@ -28,8 +28,9 @@ create table if not exists public.customers (
   customer_code text,                           -- customer.cusid (Mã khách hàng KH001)
   email         text,                           -- customer.email
   phone         text,                           -- customer.phone
-  address       text,                           -- customer.address  (Địa chỉ - Pango customField10)
-  district      text,                           -- customer.district (Khu vực - Pango customField11)
+  address       text,                           -- customer.address  (Địa chỉ số nhà/đường - Pango customField10)
+  province      text,                           -- customer.province (Tỉnh/Thành phố - Pango customField13)
+  district      text,                           -- customer.district (Quận/Huyện - Pango customField11)
   ward          text,                           -- customer.ward     (Phường/Xã - Pango customField12)
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
@@ -37,6 +38,7 @@ create table if not exists public.customers (
 
 -- Bổ sung cột địa chỉ cho DB đã tạo từ trước (chạy lại an toàn).
 alter table public.customers add column if not exists address  text;
+alter table public.customers add column if not exists province text;
 alter table public.customers add column if not exists district text;
 alter table public.customers add column if not exists ward     text;
 

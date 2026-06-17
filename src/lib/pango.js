@@ -55,8 +55,9 @@ export function buildPayload(cfg, customer, products) {
   addT('customField05', customer.orderStatus) // orderStatus
   addT('customField06', customer.email) // customerEmail
   addT('customField10', customer.address) // địa chỉ (số nhà, đường...)
-  addT('customField11', customer.district) // khu vực (tỉnh/TP - quận/huyện)
+  addT('customField11', customer.district) // quận/huyện
   addT('customField12', customer.ward) // phường/xã
+  addT('customField13', customer.province) // tỉnh/thành phố
 
   const entries = products.map((p, i) => {
     const texts = { ...baseTexts }

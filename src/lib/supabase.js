@@ -23,7 +23,7 @@ export async function findCustomerByPhone(phone) {
   if (!p) return null
   const { data, error } = await supabase
     .from('customers')
-    .select('id, name, email, customer_code, phone, address, district, ward')
+    .select('id, name, email, customer_code, phone, address, province, district, ward')
     .eq('phone', p)
     .order('updated_at', { ascending: false })
     .limit(1)
@@ -31,6 +31,27 @@ export async function findCustomerByPhone(phone) {
   if (error) throw new Error('Tra cứu khách hàng lỗi: ' + error.message)
   return data || null
 }
+
+// ---- Sinh mã kế tiếp dạng PREFIX + số (vd KH001, DH001) ----
+// Quét các mã hiện có khớp prefix, lấy số lớn nhất rồi +1. DB rỗng -> số 1.
+async function nextCode(table, column, prefix, pad = 3) {
+  const first = `${prefix}${String(1).padStart(pad, '0')}`
+  if (!supabase) return first // chưa cấu hình Supabase -> trả mã mặc định
+  const { data, error } = await supabase.from(table).select(column).ilike(column, `${prefix}%`)
+  if (error) throw new Error(`Sinh mã ${prefix} lỗi: ` + error.message)
+  const re = new RegExp(`^${prefix}(\\d+)$`, 'i')
+  let max = 0
+  for (const row of data || []) {
+    const m = String(row[column] ?? '').match(re)
+    if (m) max = Math.max(max, parseInt(m[1], 10))
+  }
+  return `${prefix}${String(max + 1).padStart(pad, '0')}`
+}
+
+// Mã khách hàng kế tiếp (KH001, KH002, ...)
+export const nextCustomerCode = () => nextCode('customers', 'customer_code', 'KH')
+// Mã đơn hàng kế tiếp (DH001, DH002, ...)
+export const nextOrderCode = () => nextCode('orders', 'order_code', 'DH')
 
 // ---- Lưu 1 đơn (khách + đơn + sản phẩm) vào Supabase ----
 // Trả về { order_id } khi thành công, ném lỗi khi thất bại.
@@ -44,11 +65,13 @@ export async function saveOrderToSupabase(customer, products) {
   const email = customer.email?.trim()
   const cusCode = customer.cusid?.trim()
   const address = customer.address?.trim()
+  const province = customer.province?.trim()
   const district = customer.district?.trim()
   const ward = customer.ward?.trim()
   if (email) cusRow.email = email
   if (cusCode) cusRow.customer_code = cusCode
   if (address) cusRow.address = address
+  if (province) cusRow.province = province
   if (district) cusRow.district = district
   if (ward) cusRow.ward = ward
 

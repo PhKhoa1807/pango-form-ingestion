@@ -87,7 +87,7 @@ export default function ProductsTable({ products, setProducts }) {
         onKeyDown={onAddKeyDown}
       >
         <Field label="Mã SP">
-          <TextInput size="sm" value={row.pid} onChange={upd('pid')} placeholder="SP-001" />
+          <TextInput size="sm" value={row.pid} onChange={upd('pid')} placeholder="SP001" />
         </Field>
         <Field label="Tên sản phẩm">
           <TextInput size="sm" value={row.pname} onChange={upd('pname')} placeholder="Sản phẩm A" />
