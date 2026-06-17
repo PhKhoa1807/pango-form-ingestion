@@ -37,7 +37,7 @@ export default function ProductsTable({ products, setProducts }) {
 
   return (
     <Card>
-      <h2 className="mb-3 text-[15px] text-accent2">📦 Sản phẩm trong đơn</h2>
+      <h2 className="mb-3 text-[15px] text-accent2 font-bold">📦 Sản phẩm trong đơn</h2>
       <table className="mt-[6px] w-full border-collapse text-[13px]">
         <thead>
           <tr>
@@ -68,7 +68,7 @@ export default function ProductsTable({ products, setProducts }) {
                 <td className={tdNum}>{money(lineTotal(p))}</td>
                 <td className={td}>
                   <button
-                    className="cursor-pointer border-none bg-transparent px-1 text-base text-err hover:text-[#ff8888]"
+                    className="cursor-pointer border-none bg-transparent px-1 text-base text-err hover:opacity-70"
                     title="Xóa"
                     onClick={() => removeProduct(i)}
                   >
@@ -87,18 +87,20 @@ export default function ProductsTable({ products, setProducts }) {
         onKeyDown={onAddKeyDown}
       >
         <Field label="Mã SP">
-          <TextInput value={row.pid} onChange={upd('pid')} placeholder="SP-001" />
+          <TextInput size="sm" value={row.pid} onChange={upd('pid')} placeholder="SP001" />
         </Field>
         <Field label="Tên sản phẩm">
-          <TextInput value={row.pname} onChange={upd('pname')} placeholder="Sản phẩm A" />
+          <TextInput size="sm" value={row.pname} onChange={upd('pname')} placeholder="Sản phẩm A" />
         </Field>
         <Field label="Đơn giá">
-          <TextInput type="number" value={row.price} onChange={upd('price')} placeholder="120" />
+          <TextInput size="sm" type="number" value={row.price} onChange={upd('price')} placeholder="120" />
         </Field>
         <Field label="Số lượng">
-          <TextInput type="number" value={row.qty} onChange={upd('qty')} placeholder="1" />
+          <TextInput size="sm" type="number" value={row.qty} onChange={upd('qty')} placeholder="1" />
         </Field>
-        <Button onClick={addProduct}>+ Thêm</Button>
+        <Button variant="lime" size="sm" onClick={addProduct}>
+          + Thêm
+        </Button>
       </div>
 
       <div className="mt-[14px] flex items-baseline justify-end gap-3 text-[15px]">

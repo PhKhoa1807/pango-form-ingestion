@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Field, TextInput, Button } from './ui.jsx'
 
-// Card cấu hình kết nối Pango (dạng <details> thu gọn được).
-export default function ConfigCard({ cfg, setCfg, onSave }) {
+// Card cấu hình kết nối Pango.
+// flat=false (mặc định): dạng <details> thu gọn được.
+// flat=true: card mở sẵn (dùng cho trang Thiết lập).
+export default function ConfigCard({ cfg, setCfg, onSave, flat = false }) {
   const [savedMsg, setSavedMsg] = useState('')
 
   const upd = (k) => (e) => setCfg((c) => ({ ...c, [k]: e.target.value }))
@@ -13,12 +15,8 @@ export default function ConfigCard({ cfg, setCfg, onSave }) {
     setTimeout(() => setSavedMsg(''), 3000)
   }
 
-  return (
-    <details className="rounded-xl border border-line bg-card p-[18px] [&_summary::-webkit-details-marker]:hidden">
-      <summary className="cursor-pointer list-none font-semibold text-[15px] text-accent2 before:content-['▸_'] [details[open]_&]:before:content-['▾_']">
-        ⚙️ Cấu hình kết nối Pango
-      </summary>
-      <div className="mt-4 grid gap-3">
+  const fields = (
+    <div className={flat ? 'grid gap-3' : 'mt-4 grid gap-3'}>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="OrgId" required>
             <TextInput value={cfg.orgId} onChange={upd('orgId')} />
@@ -47,7 +45,19 @@ export default function ConfigCard({ cfg, setCfg, onSave }) {
           </Button>
           <span className="text-[11px] text-muted">{savedMsg}</span>
         </div>
-      </div>
+    </div>
+  )
+
+  if (flat) {
+    return <div className="rounded-xl border border-line bg-card p-[18px] shadow-sm">{fields}</div>
+  }
+
+  return (
+    <details className="rounded-xl border border-line bg-card p-[18px] shadow-sm [&_summary::-webkit-details-marker]:hidden">
+      <summary className="cursor-pointer list-none font-semibold text-[15px] text-accent2 before:content-['▸_'] [details[open]_&]:before:content-['▾_']">
+        ⚙️ Cấu hình kết nối Pango
+      </summary>
+      {fields}
     </details>
   )
 }
