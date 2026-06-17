@@ -8,10 +8,10 @@ export function Card({ children, className = '' }) {
   )
 }
 
-export function Field({ label, required, hint, children }) {
+export function Field({ label, required, hint, error, children }) {
   return (
     <div>
-      <label className="mb-[5px] block text-[13px] font-semibold text-txt">
+      <label className={`mb-[5px] block text-[13px] font-semibold ${error ? 'text-err' : 'text-txt'}`}>
         {label} {required && <span className="text-err">*</span>}
       </label>
       {children}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { EMPTY_CUSTOMER } from '../config.js'
 import { buildPayload, pushToPango } from '../lib/pango.js'
 import { saveOrderToSupabase, supabaseEnabled } from '../lib/supabase.js'
@@ -7,6 +7,17 @@ import ProductsTable from '../components/ProductsTable.jsx'
 import { PreviewCard, ResponseCard } from '../components/ResultPanel.jsx'
 import { Card, Button } from '../components/ui.jsx'
 
+// Các trường bắt buộc nhập (key trong customer + nhãn hiển thị).
+const REQUIRED_FIELDS = [
+  ['phone', 'Số điện thoại'],
+  ['name', 'Tên khách hàng'],
+  ['address', 'Địa chỉ'],
+  ['province', 'Tỉnh/Thành phố'],
+  ['district', 'Quận/Huyện'],
+  ['ward', 'Phường/Xã'],
+]
+const getMissing = (c) => REQUIRED_FIELDS.filter(([k]) => !String(c[k] ?? '').trim()).map(([k]) => k)
+
 // Phần "Tạo đơn hàng": nhập tay → đẩy lên Pango (+ lưu Supabase).
 export default function CreateOrder({ cfg }) {
   const [customer, setCustomer] = useState(EMPTY_CUSTOMER)
@@ -14,15 +25,26 @@ export default function CreateOrder({ cfg }) {
   const [payload, setPayload] = useState(null)
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [invalid, setInvalid] = useState([]) // key các trường thiếu (bôi đỏ)
+  const [triedSubmit, setTriedSubmit] = useState(false)
+
+  // Sau lần bấm Gửi đầu tiên, tự cập nhật lại danh sách lỗi khi người dùng nhập.
+  useEffect(() => {
+    if (triedSubmit) setInvalid(getMissing(customer))
+  }, [customer, triedSubmit])
 
   const handlePreview = () => {
     setPayload(buildPayload(cfg, customer, products))
   }
 
   const handleExecute = async () => {
-    if (!customer.name.trim()) return alert('Tên khách hàng là bắt buộc.')
-    if (!customer.orderId.trim())
-      return alert('Mã đơn (orderId) là bắt buộc — dùng làm gốc refId.')
+    const missing = getMissing(customer)
+    if (missing.length) {
+      setInvalid(missing)
+      setTriedSubmit(true)
+      return // chưa đủ trường bắt buộc -> không gửi
+    }
+    setInvalid([])
     if (!products.length) return alert('Đơn phải có ít nhất 1 sản phẩm.')
 
     const p = buildPayload(cfg, customer, products)
@@ -51,6 +73,8 @@ export default function CreateOrder({ cfg }) {
         setCustomer(EMPTY_CUSTOMER)
         setProducts([])
         setPayload(null)
+        setInvalid([])
+        setTriedSubmit(false)
       }
     } catch (e) {
       setResult({ error: e.message })
@@ -63,6 +87,8 @@ export default function CreateOrder({ cfg }) {
     setCustomer(EMPTY_CUSTOMER)
     setProducts([])
     setPayload(null)
+    setInvalid([])
+    setTriedSubmit(false)
   }
 
   return (
@@ -75,7 +101,7 @@ export default function CreateOrder({ cfg }) {
         </p> */}
       </div>
 
-      <CustomerForm customer={customer} setCustomer={setCustomer} />
+      <CustomerForm customer={customer} setCustomer={setCustomer} invalid={invalid} />
       <ProductsTable products={products} setProducts={setProducts} />
 
       <Card className="!p-0 !border-0 !bg-transparent !shadow-none">
@@ -90,6 +116,9 @@ export default function CreateOrder({ cfg }) {
             Xóa form
           </Button>
         </div>
+        {invalid.length > 0 && (
+          <div className="mt-2 text-[13px] font-semibold text-err">⚠️ Các trường bắt buộc nhập</div>
+        )}
       </Card>
 
       <PreviewCard payload={payload} />

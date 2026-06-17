@@ -10,7 +10,8 @@ import {
 import { getProvinces, getDistricts, getWards } from '../lib/provinces.js'
 
 // Form thông tin khách hàng & đơn.
-export default function CustomerForm({ customer, setCustomer }) {
+export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
+  const isInvalid = (k) => invalid.includes(k)
   const upd = (k) => (e) => setCustomer((c) => ({ ...c, [k]: e.target.value }))
   const [lookup, setLookup] = useState(null) // { type: 'loading'|'found'|'new'|'error', msg }
 
@@ -160,7 +161,7 @@ export default function CustomerForm({ customer, setCustomer }) {
     <Card>
       <h2 className="mb-3 text-[15px] text-accent2 font-bold">👤 Thông tin khách hàng &amp; đơn</h2>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Số điện thoại" required>
+        <Field label="Số điện thoại" required error={isInvalid('phone')}>
           <TextInput
             size="sm"
             value={customer.phone}
@@ -170,7 +171,7 @@ export default function CustomerForm({ customer, setCustomer }) {
           />
           {lookup && <div className={`mt-1 text-[11px] ${lookupColor}`}>{lookup.msg}</div>}
         </Field>
-        <Field label="Tên khách hàng" required>
+        <Field label="Tên khách hàng" required error={isInvalid('name')}>
           <TextInput size="sm" value={customer.name} onChange={upd('name')} placeholder="Nguyễn Văn A" />
         </Field>
         <Field label="Mã khách hàng">
@@ -179,10 +180,10 @@ export default function CustomerForm({ customer, setCustomer }) {
         <Field label="Email khách hàng">
           <TextInput size="sm" value={customer.email} onChange={upd('email')} placeholder="a@example.com" />
         </Field>
-        <Field label="Mã đơn hàng" required>
+        <Field label="Mã đơn hàng">
           <TextInput size="sm" value={customer.orderId} onChange={upd('orderId')} placeholder="DH-0001" readOnly />
         </Field>
-        <Field label="Địa chỉ" required>
+        <Field label="Địa chỉ" required error={isInvalid('address')}>
           <TextInput
             size="sm"
             value={customer.address}
@@ -190,7 +191,7 @@ export default function CustomerForm({ customer, setCustomer }) {
             placeholder="Số nhà, tòa nhà, ngõ, đường"
           />
         </Field>
-        <Field label="Tỉnh / Thành phố" required>
+        <Field label="Tỉnh / Thành phố" required error={isInvalid('province')}>
           <Combobox
             size="sm"
             value={geo.provinceCode}
@@ -199,7 +200,7 @@ export default function CustomerForm({ customer, setCustomer }) {
             placeholder="Gõ hoặc chọn Tỉnh/Thành"
           />
         </Field>
-        <Field label="Quận / Huyện" required>
+        <Field label="Quận / Huyện" required error={isInvalid('district')}>
           <Combobox
             size="sm"
             value={geo.districtCode}
@@ -209,7 +210,7 @@ export default function CustomerForm({ customer, setCustomer }) {
             placeholder="Gõ hoặc chọn Quận/Huyện"
           />
         </Field>
-        <Field label="Phường / Xã" required>
+        <Field label="Phường / Xã" required error={isInvalid('ward')}>
           <Combobox
             size="sm"
             value={geo.wardCode}
