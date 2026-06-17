@@ -2,7 +2,9 @@
 
 export function Card({ children, className = '' }) {
   return (
-    <div className={`rounded-xl border border-line bg-card p-[18px] ${className}`}>{children}</div>
+    <div className={`rounded-xl border border-line bg-card p-[18px] shadow-sm ${className}`}>
+      {children}
+    </div>
   )
 }
 
@@ -31,7 +33,7 @@ export function Button({ variant = 'primary', className = '', ...props }) {
     'rounded-lg px-[18px] py-[10px] font-semibold cursor-pointer disabled:opacity-50 ' +
     'disabled:cursor-not-allowed transition-colors'
   const variants = {
-    primary: 'bg-accent text-white border-none hover:bg-accent2',
+    primary: 'bg-accent text-white border-none shadow-sm hover:bg-accent2 hover:shadow-md',
     ghost: 'bg-transparent border border-line text-txt hover:border-accent hover:bg-card2',
   }
   return <button {...props} className={`${base} ${variants[variant]} ${className}`} />

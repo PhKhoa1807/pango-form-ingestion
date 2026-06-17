@@ -1,0 +1,45 @@
+// Danh sách các phần (module) của ứng dụng — dùng cho Dashboard và điều hướng.
+export const MENU = [
+  {
+    key: 'create-order',
+    title: 'Tạo đơn hàng',
+    icon: '🧾',
+    desc: 'Nhập đơn tay → đẩy dữ liệu lên Pango',
+    ready: true,
+  },
+  {
+    key: 'manage-orders',
+    title: 'Quản lý đơn hàng',
+    icon: '📋',
+    desc: 'Xem & tra cứu các đơn đã tạo',
+    ready: false,
+  },
+  {
+    key: 'manage-products',
+    title: 'Quản lý sản phẩm',
+    icon: '📦',
+    desc: 'Danh mục sản phẩm theo thương hiệu',
+    ready: false,
+  },
+  {
+    key: 'create-product-code',
+    title: 'Tạo mã sản phẩm',
+    icon: '🏷️',
+    desc: 'Sinh mã / SKU cho sản phẩm mới',
+    ready: false,
+  },
+  {
+    key: 'manage-customers',
+    title: 'Quản lý khách hàng',
+    icon: '👥',
+    desc: 'Danh sách & thông tin khách hàng',
+    ready: false,
+  },
+  {
+    key: 'settings',
+    title: 'Thiết lập',
+    icon: '⚙️',
+    desc: 'Cấu hình kết nối Pango',
+    ready: true,
+  },
+]

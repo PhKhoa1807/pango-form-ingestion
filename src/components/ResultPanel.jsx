@@ -6,7 +6,7 @@ export function PreviewCard({ payload }) {
   return (
     <Card>
       <h2 className="mb-3 text-[15px] text-accent2">📦 Request Payload</h2>
-      <pre className="m-0 max-h-[360px] overflow-auto rounded-lg border border-line bg-[#0c0e12] p-3 font-mono text-xs">
+      <pre className="m-0 max-h-[360px] overflow-auto rounded-lg border border-line bg-card2 p-3 font-mono text-xs">
         {JSON.stringify(payload, null, 2)}
       </pre>
     </Card>
@@ -49,7 +49,7 @@ export function ResponseCard({ result }) {
       </div>
       {body != null && (
         <pre
-          className={`m-0 max-h-[360px] overflow-auto rounded-lg border bg-[#0c0e12] p-3 font-mono text-xs ${
+          className={`m-0 max-h-[360px] overflow-auto rounded-lg border bg-card2 p-3 font-mono text-xs ${
             error != null || ok === false ? 'border-err' : ok ? 'border-ok' : 'border-line'
           }`}
         >

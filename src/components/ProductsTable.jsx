@@ -68,7 +68,7 @@ export default function ProductsTable({ products, setProducts }) {
                 <td className={tdNum}>{money(lineTotal(p))}</td>
                 <td className={td}>
                   <button
-                    className="cursor-pointer border-none bg-transparent px-1 text-base text-err hover:text-[#ff8888]"
+                    className="cursor-pointer border-none bg-transparent px-1 text-base text-err hover:opacity-70"
                     title="Xóa"
                     onClick={() => removeProduct(i)}
                   >

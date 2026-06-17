@@ -1,19 +1,20 @@
 @import 'tailwindcss';
 
-/* Bảng màu dark theme port từ bản HTML gốc -> Tailwind v4 design tokens.
+/* Bảng màu light theme khớp logo VSON (xanh lá chủ đạo + cam điểm nhấn) -> Tailwind v4 design tokens.
    Mỗi --color-* tạo ra các utility tương ứng: bg-card, text-muted, border-line... */
 @theme {
-  --color-bg: #0f1115;
-  --color-card: #1a1d24;
-  --color-card2: #232730;
-  --color-line: #2e333d;
-  --color-txt: #e6e8ec;
-  --color-muted: #9aa1ac;
-  --color-accent: #6c5ce7;
-  --color-accent2: #8b7bff;
-  --color-ok: #2ecc71;
-  --color-err: #ff5c5c;
-  --color-warn: #ffb84d;
+  --color-bg: #f4f6f8;
+  --color-card: #ffffff;
+  --color-card2: #eef1f4;
+  --color-line: #dde2e8;
+  --color-txt: #1f2933;
+  --color-muted: #6b7480;
+  --color-accent: #2fa84f;
+  --color-accent2: #248f42;
+  --color-orange: #f0822e;
+  --color-ok: #2fa84f;
+  --color-err: #e53935;
+  --color-warn: #f0822e;
 
   --font-mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
 }
