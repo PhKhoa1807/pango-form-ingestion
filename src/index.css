@@ -16,6 +16,7 @@
   --color-err: #e53935;
   --color-warn: #f0822e;
 
+  --font-sans: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
 }
 
@@ -24,5 +25,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-txt);
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-sans);
+  /* Montserrat mảnh hơn Segoe UI -> nâng weight nền lên 500 cho chữ rõ, đỡ nhạt */
+  font-weight: 500;
 }

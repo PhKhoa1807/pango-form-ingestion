@@ -20,4 +20,7 @@ export const EMPTY_CUSTOMER = {
   phone: '',
   orderId: '',
   orderStatus: '',
+  address: '',
+  district: '',
+  ward: '',
 }

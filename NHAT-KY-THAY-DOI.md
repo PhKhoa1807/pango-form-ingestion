@@ -92,4 +92,50 @@ Tái cấu trúc app từ một trang đơn (single form) thành **kiến trúc 
 
 ## Việc còn lại (gợi ý)
 - 4 module đang là Placeholder: Quản lý đơn hàng, Quản lý sản phẩm, Tạo mã sản phẩm, Quản lý khách hàng.
-- Lưu ý: `src/nav.js` đang lưu **không đúng encoding UTF-8** (tiếng Việt bị lỗi khi xem bằng git) — nên lưu lại đúng UTF-8.
+
+---
+
+# Đợt 2 — Chuyển sang layout Sidebar (tham khảo mẫu dashboard Dribbble)
+
+## 4. Sidebar điều hướng cố định
+
+### `src/nav.js` (sửa)
+- Tách `MENU` thành 2 nhóm:
+  - `MENU` — nhóm chính: **Dashboard** (mới thêm), Tạo đơn hàng, Quản lý đơn hàng, Quản lý sản phẩm, Tạo mã sản phẩm, Quản lý khách hàng.
+  - `PREFERENCE` — nhóm dưới cùng: **Thiết lập**.
+
+### `src/components/Sidebar.jsx` (mới)
+- Thanh điều hướng trái cố định: logo + tên "VSON / Nhập thông tin" ở trên, nhóm **Menu** và **Preference**, mục đang chọn được highlight (nền xanh nhạt + chữ xanh đậm).
+- **Thu nhỏ / mở rộng được** bằng nút mũi tên (ô vuông bo góc có viền, dùng icon SVG `angle-left-solid-full.svg`, xoay 180° khi thu gọn):
+  - Mở rộng `w-240px`: hiện đầy đủ logo, tên, chữ các mục, badge "Sắp có".
+  - Thu gọn `w-88px`: chỉ còn icon (canh trái, giữ nguyên vị trí), chữ nhóm rút gọn ("PREFERENCE" → "PRE"), có tooltip tên mục.
+- Mỗi mục có chiều cao cố định `h-[38px]` để icon không bị xê dịch dọc khi thu/mở.
+- Có **gạch ngang nhẹ** ngăn cách logo và nhóm Menu.
+- Hiệu ứng chuyển độ rộng mượt (`transition-[width] duration-300 ease-in-out` + `overflow-hidden whitespace-nowrap` để chữ cắt gọn, không xuống dòng).
+
+### `src/App.jsx` (sửa)
+- Layout: `flex h-screen overflow-hidden` — Sidebar trái + `<main>` cuộn nội bộ.
+- Bỏ nút "← Trang chủ" (điều hướng giờ qua sidebar).
+- Import thêm `PREFERENCE`, có biến `currentTitle` (tên trang hiện tại).
+
+### `src/pages/Dashboard.jsx` (sửa)
+- Bỏ logo (đã nằm ở sidebar), lọc bỏ chính mục `dashboard` khỏi lưới ô.
+
+## 5. Ẩn thanh cuộn
+
+### `src/index.css` (sửa)
+- Thêm utility `.no-scrollbar` — ẩn thanh cuộn (Chrome/Edge/Safari + Firefox) nhưng vẫn cuộn được. Áp vào `<main>` trong `App.jsx`.
+
+## 6. Nút màu lime (#A0E870)
+
+### `src/components/ui.jsx` (sửa)
+- Thêm variant **`lime`**: nền `#A0E870`, chữ tối `#1f2933`, hover đậm hơn.
+- Áp cho **2 nút**: "+ Thêm" (`ProductsTable.jsx`) và "Gửi lên Pango" (`CreateOrder.jsx`). Các nút khác giữ nguyên.
+
+## 7. Tài nguyên thêm
+- `src/access/image/angle-left-solid-full.svg` — icon mũi tên cho nút thu/mở sidebar.
+
+---
+
+## Lịch sử thử nghiệm (đã thay đổi rồi bỏ)
+- Từng làm sidebar dạng **drawer hamburger trượt** (mở bằng nút ☰, có nền mờ) → sau đó đổi sang **sidebar cố định thu/mở được** theo yêu cầu.

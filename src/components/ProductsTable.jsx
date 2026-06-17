@@ -87,18 +87,18 @@ export default function ProductsTable({ products, setProducts }) {
         onKeyDown={onAddKeyDown}
       >
         <Field label="Mã SP">
-          <TextInput value={row.pid} onChange={upd('pid')} placeholder="SP-001" />
+          <TextInput size="sm" value={row.pid} onChange={upd('pid')} placeholder="SP-001" />
         </Field>
         <Field label="Tên sản phẩm">
-          <TextInput value={row.pname} onChange={upd('pname')} placeholder="Sản phẩm A" />
+          <TextInput size="sm" value={row.pname} onChange={upd('pname')} placeholder="Sản phẩm A" />
         </Field>
         <Field label="Đơn giá">
-          <TextInput type="number" value={row.price} onChange={upd('price')} placeholder="120" />
+          <TextInput size="sm" type="number" value={row.price} onChange={upd('price')} placeholder="120" />
         </Field>
         <Field label="Số lượng">
-          <TextInput type="number" value={row.qty} onChange={upd('qty')} placeholder="1" />
+          <TextInput size="sm" type="number" value={row.qty} onChange={upd('qty')} placeholder="1" />
         </Field>
-        <Button variant="lime" onClick={addProduct}>
+        <Button variant="lime" size="sm" onClick={addProduct}>
           + Thêm
         </Button>
       </div>

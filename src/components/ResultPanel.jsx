@@ -5,7 +5,7 @@ export function PreviewCard({ payload }) {
   if (!payload) return null
   return (
     <Card>
-      <h2 className="mb-3 text-[15px] text-accent2">📦 Request Payload</h2>
+      <h2 className="mb-3 text-[15px] font-bold text-accent2">📦 Request Payload</h2>
       <pre className="m-0 max-h-[360px] overflow-auto rounded-lg border border-line bg-card2 p-3 font-mono text-xs">
         {JSON.stringify(payload, null, 2)}
       </pre>
@@ -29,7 +29,7 @@ export function ResponseCard({ result }) {
 
   return (
     <Card>
-      <h2 className="mb-3 text-[15px] text-accent2">📨 Response Result</h2>
+      <h2 className="mb-3 text-[15px] font-bold text-accent2">📨 Response Result</h2>
       {statusMsg && <div className="mb-1 text-[13px] text-muted">{statusMsg}</div>}
       <div className="mb-2 text-[13px] font-semibold">
         {!hasResult ? (

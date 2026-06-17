@@ -22,6 +22,9 @@ export default function CustomerForm({ customer, setCustomer }) {
           name: found.name || '',
           email: found.email || '',
           cusid: found.customer_code || '',
+          address: found.address || '',
+          district: found.district || '',
+          ward: found.ward || '',
         }))
         setLookup({ type: 'found', msg: `✅ Đã có khách: ${found.name} — tự điền thông tin.` })
       } else {
@@ -45,6 +48,7 @@ export default function CustomerForm({ customer, setCustomer }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Số điện thoại" required>
           <TextInput
+            size="sm"
             value={customer.phone}
             onChange={upd('phone')}
             onBlur={onPhoneBlur}
@@ -53,23 +57,25 @@ export default function CustomerForm({ customer, setCustomer }) {
           {lookup && <div className={`mt-1 text-[11px] ${lookupColor}`}>{lookup.msg}</div>}
         </Field>
         <Field label="Tên khách hàng" required>
-          <TextInput value={customer.name} onChange={upd('name')} placeholder="Nguyễn Văn A" />
+          <TextInput size="sm" value={customer.name} onChange={upd('name')} placeholder="Nguyễn Văn A" />
         </Field>
         <Field label="Mã khách hàng">
-          <TextInput value={customer.cusid} onChange={upd('cusid')} placeholder="KH001" />
+          <TextInput size="sm" value={customer.cusid} onChange={upd('cusid')} placeholder="KH001" readOnly/>
         </Field>
         <Field label="Email khách hàng">
-          <TextInput value={customer.email} onChange={upd('email')} placeholder="a@example.com" />
+          <TextInput size="sm" value={customer.email} onChange={upd('email')} placeholder="a@example.com" />
         </Field>
-        <Field label="Mã đơn" required>
-          <TextInput value={customer.orderId} onChange={upd('orderId')} placeholder="DH-0001" />
+        <Field label="Mã đơn hàng" required>
+          <TextInput size="sm" value={customer.orderId} onChange={upd('orderId')} placeholder="DH-0001" readOnly/>
         </Field>
-        <Field label="Trạng thái đơn">
-          <TextInput
-            value={customer.orderStatus}
-            onChange={upd('orderStatus')}
-            placeholder="Mới / Đã giao..."
-          />
+        <Field label="Địa chỉ" required>
+          <TextInput size="sm" value={customer.address} onChange={upd('address')} placeholder="Số nhà, tòa nhà, ngõ, đường" />
+        </Field>
+        <Field label="Khu vực" required>
+          <TextInput size="sm" value={customer.district} onChange={upd('district')} placeholder="Tỉnh/TP - Quận/Huyện" />
+        </Field>
+        <Field label="Phường xã" required>
+          <TextInput size="sm" value={customer.ward} onChange={upd('ward')} placeholder="Phường/Xã" />
         </Field>
       </div>
     </Card>

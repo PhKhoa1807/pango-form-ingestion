@@ -23,7 +23,7 @@ export async function findCustomerByPhone(phone) {
   if (!p) return null
   const { data, error } = await supabase
     .from('customers')
-    .select('id, name, email, customer_code, phone')
+    .select('id, name, email, customer_code, phone, address, district, ward')
     .eq('phone', p)
     .order('updated_at', { ascending: false })
     .limit(1)
@@ -43,8 +43,14 @@ export async function saveOrderToSupabase(customer, products) {
   const cusRow = { name: customer.name.trim(), phone }
   const email = customer.email?.trim()
   const cusCode = customer.cusid?.trim()
+  const address = customer.address?.trim()
+  const district = customer.district?.trim()
+  const ward = customer.ward?.trim()
   if (email) cusRow.email = email
   if (cusCode) cusRow.customer_code = cusCode
+  if (address) cusRow.address = address
+  if (district) cusRow.district = district
+  if (ward) cusRow.ward = ward
 
   let customerId
   const existing = phone ? await findCustomerByPhone(phone) : null

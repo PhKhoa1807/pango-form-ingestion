@@ -20,6 +20,9 @@ create table if not exists public.customers (
   customer_code text,                           -- customer.cusid (Mã khách hàng KH001)
   email         text,                           -- customer.email
   phone         text,                           -- customer.phone
+  address       text,                           -- customer.address  (Địa chỉ - Pango customField10)
+  district      text,                           -- customer.district (Khu vực - Pango customField11)
+  ward          text,                           -- customer.ward     (Phường/Xã - Pango customField12)
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
