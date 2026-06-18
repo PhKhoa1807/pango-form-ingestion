@@ -13,6 +13,9 @@ export const DEFAULT_CFG = {
 
 export const CFG_STORAGE_KEY = 'vson_cfg_v2'
 
+// Giảm giá đơn: mode 'percent' (% theo tổng tiền hàng) hoặc 'vnd' (số tiền cố định).
+export const EMPTY_DISCOUNT = { mode: 'percent', value: '' }
+
 export const EMPTY_CUSTOMER = {
   name: '',
   cusid: '',

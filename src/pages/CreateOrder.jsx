@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { EMPTY_CUSTOMER } from '../config.js'
+import { EMPTY_CUSTOMER, EMPTY_DISCOUNT } from '../config.js'
 import { buildPayload, pushToPango } from '../lib/pango.js'
 import { saveOrderToSupabase, supabaseEnabled } from '../lib/supabase.js'
 import CustomerForm from '../components/CustomerForm.jsx'
@@ -22,6 +22,7 @@ const getMissing = (c) => REQUIRED_FIELDS.filter(([k]) => !String(c[k] ?? '').tr
 export default function CreateOrder({ cfg }) {
   const [customer, setCustomer] = useState(EMPTY_CUSTOMER)
   const [products, setProducts] = useState([])
+  const [discount, setDiscount] = useState(EMPTY_DISCOUNT)
   const [payload, setPayload] = useState(null)
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -58,7 +59,7 @@ export default function CreateOrder({ cfg }) {
       if (supabaseEnabled) {
         try {
           setResult({ statusMsg: '⏳ Đang lưu vào Supabase...' })
-          await saveOrderToSupabase(customer, products)
+          await saveOrderToSupabase(customer, products, discount)
           dbMsg = '✅ Đã lưu Supabase. '
         } catch (dbErr) {
           dbMsg = '⚠️ Lưu Supabase lỗi: ' + dbErr.message + '. '
@@ -72,6 +73,7 @@ export default function CreateOrder({ cfg }) {
       if (r.ok) {
         setCustomer(EMPTY_CUSTOMER)
         setProducts([])
+        setDiscount(EMPTY_DISCOUNT)
         setPayload(null)
         setInvalid([])
         setTriedSubmit(false)
@@ -102,7 +104,12 @@ export default function CreateOrder({ cfg }) {
       </div>
 
       <CustomerForm customer={customer} setCustomer={setCustomer} invalid={invalid} />
-      <ProductsTable products={products} setProducts={setProducts} />
+      <ProductsTable
+        products={products}
+        setProducts={setProducts}
+        discount={discount}
+        setDiscount={setDiscount}
+      />
 
       <Card className="!p-0 !border-0 !bg-transparent !shadow-none">
         <div className="flex flex-wrap items-center gap-[10px]">

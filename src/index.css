@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import "@heroui/styles";
 
 /* Bảng màu light theme khớp logo VSON (xanh lá chủ đạo + cam điểm nhấn) -> Tailwind v4 design tokens.
    Mỗi --color-* tạo ra các utility tương ứng: bg-card, text-muted, border-line... */

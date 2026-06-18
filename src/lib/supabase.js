@@ -120,7 +120,7 @@ export const searchProductsByName = (q) => searchProducts('name', q)
 
 // ---- Lưu 1 đơn (khách + đơn + sản phẩm) vào Supabase ----
 // Trả về { order_id } khi thành công, ném lỗi khi thất bại.
-export async function saveOrderToSupabase(customer, products) {
+export async function saveOrderToSupabase(customer, products, discount = null) {
   if (!supabase) throw new Error('Chưa cấu hình Supabase (thiếu VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).')
 
   // 1) Khách hàng: nhận diện theo số điện thoại để không tạo trùng.
@@ -158,11 +158,14 @@ export async function saveOrderToSupabase(customer, products) {
   }
 
   // 2) Đơn hàng: upsert theo order_code (gửi lại cùng mã đơn sẽ ghi đè, không nhân bản).
+  //    Giảm giá: VND -> type 'amount', % -> type 'percent' (giá trị lưu nguyên số đã nhập).
   const orderRow = {
     customer_id: customerId,
     order_code: customer.orderId.trim(),
     status: customer.orderStatus?.trim() || null,
     order_date: new Date().toISOString(), // tự lấy giờ hiện tại lúc lưu/đẩy
+    total_discount: Number(discount?.value) || 0,
+    total_discount_type: discount?.mode === 'vnd' ? 'amount' : 'percent',
   }
   const { data: order, error: orderErr } = await supabase
     .from('orders')

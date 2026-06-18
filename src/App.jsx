@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import CreateOrder from './pages/CreateOrder.jsx'
 import Settings from './pages/Settings.jsx'
 import Placeholder from './pages/Placeholder.jsx'
+import { ToastHost } from './components/Toast.jsx'
 
 function loadCfg() {
   try {
@@ -51,6 +52,7 @@ export default function App() {
       <main className="no-scrollbar flex-1 overflow-auto p-6">
         <div className="mx-auto max-w-[1100px]">{renderView()}</div>
       </main>
+      <ToastHost />
     </div>
   )
 }
