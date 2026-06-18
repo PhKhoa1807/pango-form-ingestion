@@ -53,6 +53,71 @@ export const nextCustomerCode = () => nextCode('customers', 'customer_code', 'KH
 // Mã đơn hàng kế tiếp (DH001, DH002, ...)
 export const nextOrderCode = () => nextCode('orders', 'order_code', 'DH')
 
+// ---- Tìm sản phẩm trong danh mục (cả Torayvino + King Bag) ----
+// Hai bảng cùng cấu trúc -> query song song rồi gộp kết quả.
+const PRODUCT_TABLES = [
+  { table: 'product_torayvino', source: 'Torayvino' },
+  { table: 'product_kingbag', source: 'King Bag' },
+]
+
+// Chuẩn hóa 1 dòng DB -> { code, name, price, group, source }.
+// đơn giá lấy giá bán (sale_price), thiếu thì lùi về giá niêm yết.
+const mapProduct = (row, source) => ({
+  code: row.product_code,
+  name: row.product_name,
+  price: row.sale_price ?? row.list_price ?? 0,
+  group: row.product_group || '',
+  source,
+})
+
+// Bỏ dấu tiếng Việt + thường hóa để tìm "không cần đúng dấu".
+const norm = (s) =>
+  String(s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+
+// Tải toàn bộ danh mục (cả 2 bảng) 1 lần rồi cache trong RAM.
+// Danh mục nhỏ -> lọc client-side cho phép tìm bỏ dấu (Postgres ilike phân biệt dấu).
+let _allProducts = null
+async function getAllProducts() {
+  if (_allProducts) return _allProducts
+  if (!supabase) return []
+  const perTable = await Promise.all(
+    PRODUCT_TABLES.map(async ({ table, source }) => {
+      const { data, error } = await supabase
+        .from(table)
+        .select('product_code, product_name, product_group, list_price, sale_price')
+      if (error) throw new Error(`Tải sản phẩm (${table}) lỗi: ` + error.message)
+      return (data || []).map((r) => mapProduct(r, source))
+    }),
+  )
+  _allProducts = perTable.flat()
+  return _allProducts
+}
+
+// Tìm theo 1 field ('code' | 'name'), khớp chuỗi con, bỏ dấu + không phân biệt hoa/thường.
+async function searchProducts(field, query, limit = 50) {
+  const q = norm(String(query ?? '').trim())
+  if (!q) return []
+  const all = await getAllProducts()
+  const matched = all.filter((p) => norm(p[field]).includes(q))
+  // Ưu tiên mục khớp ngay từ đầu, sau đó xếp theo tên cho dễ tìm (tránh cắt nhầm khi nhiều kết quả).
+  matched.sort((a, b) => {
+    const pa = norm(a[field]).startsWith(q) ? 0 : 1
+    const pb = norm(b[field]).startsWith(q) ? 0 : 1
+    if (pa !== pb) return pa - pb
+    return a.name.localeCompare(b.name, 'vi')
+  })
+  return matched.slice(0, limit)
+}
+
+// Search theo Mã sản phẩm (cả 2 bảng)
+export const searchProductsByCode = (q) => searchProducts('code', q)
+// Search theo Tên sản phẩm (cả 2 bảng)
+export const searchProductsByName = (q) => searchProducts('name', q)
+
 // ---- Lưu 1 đơn (khách + đơn + sản phẩm) vào Supabase ----
 // Trả về { order_id } khi thành công, ném lỗi khi thất bại.
 export async function saveOrderToSupabase(customer, products) {

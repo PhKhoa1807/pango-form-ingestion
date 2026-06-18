@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Card, Field, TextInput, Button } from './ui.jsx'
+import { ProductPicker } from './ProductPicker.jsx'
+import { searchProductsByCode, searchProductsByName } from '../lib/supabase.js'
 import { money, lineTotal } from '../lib/pango.js'
 
 const EMPTY_ROW = { pid: '', pname: '', price: '', qty: '1' }
@@ -8,6 +10,10 @@ const EMPTY_ROW = { pid: '', pname: '', price: '', qty: '1' }
 export default function ProductsTable({ products, setProducts }) {
   const [row, setRow] = useState(EMPTY_ROW)
   const upd = (k) => (e) => setRow((r) => ({ ...r, [k]: e.target.value }))
+
+  // Chọn 1 sản phẩm từ danh mục -> tự điền mã + tên + đơn giá (giữ nguyên số lượng).
+  const onPickProduct = (p) =>
+    setRow((r) => ({ ...r, pid: p.code, pname: p.name, price: String(p.price) }))
 
   const addProduct = () => {
     const pid = row.pid.trim()
@@ -87,10 +93,24 @@ export default function ProductsTable({ products, setProducts }) {
         onKeyDown={onAddKeyDown}
       >
         <Field label="Mã SP">
-          <TextInput size="sm" value={row.pid} onChange={upd('pid')} placeholder="SP001" />
+          <ProductPicker
+            size="sm"
+            value={row.pid}
+            onChange={(v) => setRow((r) => ({ ...r, pid: v }))}
+            search={searchProductsByCode}
+            onPick={onPickProduct}
+            placeholder="Gõ mã SP để tìm..."
+          />
         </Field>
         <Field label="Tên sản phẩm">
-          <TextInput size="sm" value={row.pname} onChange={upd('pname')} placeholder="Sản phẩm A" />
+          <ProductPicker
+            size="sm"
+            value={row.pname}
+            onChange={(v) => setRow((r) => ({ ...r, pname: v }))}
+            search={searchProductsByName}
+            onPick={onPickProduct}
+            placeholder="Gõ tên SP để tìm..."
+          />
         </Field>
         <Field label="Đơn giá">
           <TextInput size="sm" type="number" value={row.price} onChange={upd('price')} placeholder="120" />
