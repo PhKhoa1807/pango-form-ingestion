@@ -26,38 +26,39 @@ export function ProductPicker({ value, onChange, search, onPick, placeholder, si
   }, [value])
 
   // Click ra ngoài -> đóng danh sách.
+  // Nghe 'pointerdown' ở CAPTURE phase: listener chạy trước mọi xử lý của React Aria
+  // (Dropdown Danh mục preventDefault/stopPropagation pointerdown ở bubble) nên luôn bắt được.
   useEffect(() => {
     const onDoc = (e) => {
       if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false)
     }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
+    document.addEventListener('pointerdown', onDoc, true)
+    return () => document.removeEventListener('pointerdown', onDoc, true)
   }, [])
 
-  // Search có debounce 250ms + reqId chống race (kết quả cũ về trễ không ghi đè).
+  // Search có debounce + reqId chống race (kết quả cũ về trễ không ghi đè).
+  // Query rỗng (vừa click vào ô) -> chạy ngay (delay 0) để sổ danh sách liền.
   const runSearch = (text) => {
     clearTimeout(timer.current)
     const q = text.trim()
-    if (!q) {
-      setResults([])
-      setLoading(false)
-      return
-    }
     setLoading(true)
-    timer.current = setTimeout(async () => {
-      const id = ++reqId.current
-      try {
-        const list = await search(q)
-        if (id === reqId.current) {
-          setResults(list)
-          setOpen(true)
+    timer.current = setTimeout(
+      async () => {
+        const id = ++reqId.current
+        try {
+          const list = await search(q)
+          if (id === reqId.current) {
+            setResults(list)
+            setOpen(true)
+          }
+        } catch {
+          if (id === reqId.current) setResults([])
+        } finally {
+          if (id === reqId.current) setLoading(false)
         }
-      } catch {
-        if (id === reqId.current) setResults([])
-      } finally {
-        if (id === reqId.current) setLoading(false)
-      }
-    }, 250)
+      },
+      q ? 250 : 0,
+    )
   }
 
   const onInput = (e) => {
@@ -66,6 +67,12 @@ export function ProductPicker({ value, onChange, search, onPick, placeholder, si
     onChange?.(v)
     setOpen(true)
     runSearch(v)
+  }
+
+  // Click/focus vào ô -> mở danh sách ngay (search cả khi chưa gõ).
+  const onFocus = () => {
+    setOpen(true)
+    runSearch(query)
   }
 
   const pick = (item) => {
@@ -89,9 +96,9 @@ export function ProductPicker({ value, onChange, search, onPick, placeholder, si
         placeholder={placeholder}
         className={cls}
         onChange={onInput}
-        onFocus={() => results.length > 0 && setOpen(true)}
+        onFocus={onFocus}
       />
-      {open && !disabled && query.trim() !== '' && (
+      {open && !disabled && (
         <ul
           className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-line bg-card shadow-md"
           onMouseDown={(e) => e.preventDefault()}

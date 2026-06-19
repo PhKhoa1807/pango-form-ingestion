@@ -104,11 +104,12 @@ export async function getAllCategories() {
 
 // Tìm theo 1 field ('code' | 'name'), khớp chuỗi con, bỏ dấu + không phân biệt hoa/thường.
 // category rỗng -> tìm trên toàn bộ; có category -> chỉ tìm trong danh mục đó.
+// query rỗng -> trả cả danh sách (theo category) để click vào ô là sổ dropdown.
 async function searchProducts(field, query, category = '', limit = 50) {
   const q = norm(String(query ?? '').trim())
-  if (!q) return []
   const all = await getAllProducts()
   const pool = category ? all.filter((p) => p.category === category) : all
+  if (!q) return [...pool].sort((a, b) => a.name.localeCompare(b.name, 'vi')).slice(0, limit)
   const matched = pool.filter((p) => norm(p[field]).includes(q))
   // Ưu tiên mục khớp ngay từ đầu, sau đó xếp theo tên cho dễ tìm (tránh cắt nhầm khi nhiều kết quả).
   matched.sort((a, b) => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { SearchField, Dropdown, Label, Button as HButton } from '@heroui/react'
+import { SearchField, Dropdown, Label, Button as HButton, Pagination } from '@heroui/react'
 import { Card, Button } from '../components/ui.jsx'
 import { listOrders, deleteOrders, supabaseEnabled } from '../lib/supabase.js'
 import { toast } from '../components/Toast.jsx'
@@ -50,9 +50,11 @@ function Checkbox({ checked, indeterminate, onChange, ariaLabel }) {
 
 // Trang Quản lý đơn hàng: search + tạo đơn + chọn nhiều + danh sách đơn.
 export default function ManageOrders({ onNavigate }) {
+  const PER_PAGE = 10
   const [orders, setOrders] = useState([])
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(new Set()) // order_id đã tick
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
 
@@ -116,6 +118,32 @@ export default function ManageOrders({ onNavigate }) {
     } catch (e) {
       toast.danger('Xóa đơn lỗi', e.message)
     }
+  }
+
+  // ---- Phân trang (10 đơn / trang) ----
+  // Đổi từ khóa search -> về trang 1.
+  useEffect(() => setPage(1), [query])
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
+  const currentPage = Math.min(page, totalPages)
+  // Kết quả co lại (xóa đơn / lọc) khiến trang hiện tại vượt quá -> kéo về trang cuối.
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
+
+  const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE)
+  const startItem = filtered.length === 0 ? 0 : (currentPage - 1) * PER_PAGE + 1
+  const endItem = Math.min(currentPage * PER_PAGE, filtered.length)
+
+  // Dãy số trang hiển thị (chèn '…' khi nhiều trang).
+  const pageNumbers = () => {
+    const pages = [1]
+    if (currentPage > 3) pages.push('ellipsis')
+    const start = Math.max(2, currentPage - 1)
+    const end = Math.min(totalPages - 1, currentPage + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+    if (currentPage < totalPages - 2) pages.push('ellipsis')
+    if (totalPages > 1) pages.push(totalPages)
+    return pages
   }
 
   const th = 'px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-muted'
@@ -211,7 +239,7 @@ export default function ManageOrders({ onNavigate }) {
                   </td>
                 </tr>
               ) : (
-                filtered.map((o) => {
+                paged.map((o) => {
                   const checked = selected.has(o.order_id)
                   return (
                     <tr
@@ -255,9 +283,42 @@ export default function ManageOrders({ onNavigate }) {
       </Card>
 
       {!loading && !err && filtered.length > 0 && (
-        <div className="mt-2 text-[12px] text-muted">
-          {selected.size > 0 ? `Đã chọn ${selected.size} / ${filtered.length} đơn` : `${filtered.length} đơn`}
-        </div>
+        <Pagination className="mt-3 w-full">
+          <Pagination.Summary>
+            Hiển thị {startItem}–{endItem} / {filtered.length} đơn
+            {selected.size > 0 ? ` · đã chọn ${selected.size}` : ''}
+          </Pagination.Summary>
+          <Pagination.Content>
+            <Pagination.Item>
+              <Pagination.Previous isDisabled={currentPage === 1} onPress={() => setPage((p) => p - 1)}>
+                <Pagination.PreviousIcon />
+                <span>Trước</span>
+              </Pagination.Previous>
+            </Pagination.Item>
+            {pageNumbers().map((p, i) =>
+              p === 'ellipsis' ? (
+                <Pagination.Item key={`ellipsis-${i}`}>
+                  <Pagination.Ellipsis />
+                </Pagination.Item>
+              ) : (
+                <Pagination.Item key={p}>
+                  <Pagination.Link isActive={p === currentPage} onPress={() => setPage(p)}>
+                    {p}
+                  </Pagination.Link>
+                </Pagination.Item>
+              ),
+            )}
+            <Pagination.Item>
+              <Pagination.Next
+                isDisabled={currentPage === totalPages}
+                onPress={() => setPage((p) => p + 1)}
+              >
+                <span>Sau</span>
+                <Pagination.NextIcon />
+              </Pagination.Next>
+            </Pagination.Item>
+          </Pagination.Content>
+        </Pagination>
       )}
     </div>
   )
