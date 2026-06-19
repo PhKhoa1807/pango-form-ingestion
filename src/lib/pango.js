@@ -28,6 +28,12 @@ export function discountAmount(discount, grand) {
   return clamp(v, 0, grand)
 }
 
+// Giảm giá theo từng dòng SP (dựa trên discountMode/discount của sp), không vượt thành tiền dòng.
+export const lineDiscount = (p) =>
+  discountAmount({ mode: p.discountMode, value: p.discount }, lineTotal(p))
+// Thành tiền dòng sau khi trừ giảm giá sản phẩm.
+export const lineNet = (p) => lineTotal(p) - lineDiscount(p)
+
 // ---- Lấy token ngầm (đổi refreshToken -> accessToken) ----
 export async function fetchToken(cfg) {
   const res = await fetch(`${AUTH_PATH}/${cfg.orgId.trim()}/authen`, {
@@ -56,8 +62,8 @@ export function buildPayload(cfg, customer, products, discount = {}) {
   const orderId = customer.orderId.trim()
   const orderTs = now // ngày giờ đặt đơn = thời điểm bấm đẩy lên Pango
 
-  // Tổng đơn = tổng tiền hàng - giảm giá (số khách cần trả).
-  const grand = products.reduce((s, p) => s + lineTotal(p), 0)
+  // Tổng đơn = tổng tiền hàng (đã trừ giảm giá từng SP) - giảm giá cả đơn.
+  const grand = products.reduce((s, p) => s + lineNet(p), 0)
   const orderTotal = grand - discountAmount(discount, grand)
 
   const baseTexts = {}

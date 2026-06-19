@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, Field, TextInput } from './ui.jsx'
 import { Combobox } from './Combobox.jsx'
 import {
@@ -13,6 +13,51 @@ import { getProvinces, getWards } from '../lib/provinces.js'
 export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
   const isInvalid = (k) => invalid.includes(k)
   const upd = (k) => (e) => setCustomer((c) => ({ ...c, [k]: e.target.value }))
+
+  // SĐT: chỉ cho nhập số — chặn ngay ở 'beforeinput' để không đụng bộ gõ tiếng Việt.
+  //  - Gõ ký tự không phải số -> chặn. Đánh dấu "vừa chặn".
+  //  - Bộ gõ (Unikey kiểu gửi phím) chèn chữ có dấu bằng cách xoá-lùi rồi chèn lại;
+  //    nếu vừa chặn 1 ký tự thì chặn luôn cái xoá-lùi đó để KHÔNG ăn nhầm số đã nhập.
+  const onlyDigits = (v) => v.replace(/\D/g, '')
+  const phoneInputRef = useRef(null)
+  const phoneBlocked = useRef(false)
+  const phoneBlockTimer = useRef(null)
+  const onPhoneChange = (e) => setCustomer((c) => ({ ...c, phone: onlyDigits(e.target.value) }))
+
+  // Chặn ký tự không phải số ngay ở native 'beforeinput' (React onBeforeInput không
+  // chắc preventDefault được). Đồng thời chặn backspace "sửa lỗi" mà bộ gõ tiếng Việt
+  // bắn ra ngay sau khi ta chặn 1 chữ -> không ăn nhầm số đã nhập.
+  useEffect(() => {
+    const el = phoneInputRef.current
+    if (!el) return
+    const markBlocked = () => {
+      phoneBlocked.current = true
+      clearTimeout(phoneBlockTimer.current)
+      phoneBlockTimer.current = setTimeout(() => (phoneBlocked.current = false), 60)
+    }
+    const onBeforeInput = (e) => {
+      const type = e.inputType
+      if (type === 'insertFromPaste' || type === 'insertFromDrop') {
+        phoneBlocked.current = false // để onChange lọc số
+        return
+      }
+      if (type === 'deleteContentBackward' || type === 'deleteContentForward') {
+        if (phoneBlocked.current) e.preventDefault()
+        return
+      }
+      if (e.data != null && /\D/.test(e.data)) {
+        e.preventDefault()
+        markBlocked()
+      } else {
+        phoneBlocked.current = false
+      }
+    }
+    el.addEventListener('beforeinput', onBeforeInput)
+    return () => el.removeEventListener('beforeinput', onBeforeInput)
+  }, [])
+  // Tên KH: không cho nhập số (bỏ ký tự 0-9 — không ảnh hưởng bộ gõ tiếng Việt).
+  const onNameChange = (e) =>
+    setCustomer((c) => ({ ...c, name: e.target.value.replace(/[0-9]/g, '') }))
   const [lookup, setLookup] = useState(null) // { type: 'loading'|'found'|'new'|'error', msg }
 
   // ---- Địa chỉ 2 cấp (Province Open API v2): Tỉnh/Thành -> Phường/Xã ----
@@ -153,15 +198,17 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
         <Field label="Số điện thoại" required error={isInvalid('phone')}>
           <TextInput
             size="sm"
+            ref={phoneInputRef}
             value={customer.phone}
-            onChange={upd('phone')}
+            onChange={onPhoneChange}
             onBlur={onPhoneBlur}
+            inputMode="numeric"
             placeholder="0901234567"
           />
           {lookup && <div className={`mt-1 text-[11px] ${lookupColor}`}>{lookup.msg}</div>}
         </Field>
         <Field label="Tên khách hàng" required error={isInvalid('name')}>
-          <TextInput size="sm" value={customer.name} onChange={upd('name')} placeholder="Nguyễn Văn A" />
+          <TextInput size="sm" value={customer.name} onChange={onNameChange} placeholder="Nguyễn Văn A" />
         </Field>
         <Field label="Mã khách hàng">
           <TextInput size="sm" value={customer.cusid} onChange={upd('cusid')} placeholder="KH001" readOnly />

@@ -139,6 +139,22 @@ export async function listOrders({ limit = 300 } = {}) {
   return data || []
 }
 
+// ---- Chi tiết 1 đơn (khách + sản phẩm) cho dialog xem đơn ----
+export async function getOrderDetail(orderId) {
+  if (!supabase) throw new Error('Chưa cấu hình Supabase.')
+  const { data, error } = await supabase
+    .from('orders')
+    .select(
+      `order_code, status, order_date, total_amount,
+       customers ( name, phone, customer_code, address, province, ward ),
+       order_items ( product_code, product_name, price, qty, product_discount, product_discount_type, line_total )`,
+    )
+    .eq('id', orderId)
+    .single()
+  if (error) throw new Error('Tải chi tiết đơn lỗi: ' + error.message)
+  return data
+}
+
 // ---- Xóa nhiều đơn hàng theo id (order_items tự xóa theo cascade) ----
 export async function deleteOrders(ids = []) {
   if (!supabase) throw new Error('Chưa cấu hình Supabase.')
@@ -213,6 +229,8 @@ export async function saveOrderToSupabase(customer, products, discount = null) {
     product_name: p.pname?.trim() || null,
     price: Number(p.price) || 0,
     qty: Number(p.qty) || 0,
+    product_discount: Number(p.discount) || 0,
+    product_discount_type: p.discountMode === 'percent' ? 'percent' : 'amount',
     // line_total do DB tự tính (generated column) — không gửi
   }))
   if (items.length) {

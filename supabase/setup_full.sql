@@ -78,12 +78,18 @@ create table if not exists public.order_items (
   order_id      uuid not null references public.orders (id) on delete cascade,
   product_code  text,                           -- product.pid   (Mã SP)
   product_name  text,                           -- product.pname (Tên sản phẩm)
-  price         bigint not null default 0,      -- product.price (Đơn giá, VND)
-  qty           integer not null default 1 check (qty > 0),
+  price                 bigint not null default 0,    -- product.price (Đơn giá, VND)
+  qty                   integer not null default 1 check (qty > 0),
+  product_discount      numeric(12,2) default 0,      -- giảm giá theo từng sản phẩm
+  product_discount_type text default 'amount',        -- 'amount' (VND) | 'percent' (%)
   -- Thành tiền dòng = đơn giá * số lượng, tự tính, không cần ghi tay
   line_total    bigint generated always as (price * qty) stored,
   created_at    timestamptz not null default now()
 );
+
+-- Bổ sung cột giảm giá sản phẩm cho DB đã tạo từ trước (chạy lại an toàn).
+alter table public.order_items add column if not exists product_discount      numeric(12,2) default 0;
+alter table public.order_items add column if not exists product_discount_type text default 'amount';
 
 create index if not exists order_items_order_id_idx on public.order_items (order_id);
 

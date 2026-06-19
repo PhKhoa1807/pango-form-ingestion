@@ -6,6 +6,7 @@ import CustomerForm from '../components/CustomerForm.jsx'
 import ProductsTable from '../components/ProductsTable.jsx'
 import { PreviewCard, ResponseCard } from '../components/ResultPanel.jsx'
 import { Card, Button } from '../components/ui.jsx'
+import { toast } from '../components/Toast.jsx'
 
 // Các trường bắt buộc nhập (key trong customer + nhãn hiển thị).
 const REQUIRED_FIELDS = [
@@ -42,6 +43,7 @@ export default function CreateOrder({ cfg }) {
     if (missing.length) {
       setInvalid(missing)
       setTriedSubmit(true)
+      toast.danger('Vui lòng nhập đầy đủ thông tin')
       return // chưa đủ trường bắt buộc -> không gửi
     }
     setInvalid([])
@@ -122,9 +124,6 @@ export default function CreateOrder({ cfg }) {
             Xóa form
           </Button>
         </div>
-        {invalid.length > 0 && (
-          <div className="mt-2 text-[13px] font-semibold text-err">⚠️ Các trường bắt buộc nhập</div>
-        )}
       </Card>
 
       <PreviewCard payload={payload} />

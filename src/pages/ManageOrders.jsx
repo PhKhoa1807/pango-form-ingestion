@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SearchField, Dropdown, Label, Button as HButton, Pagination } from '@heroui/react'
 import { Card, Button } from '../components/ui.jsx'
+import OrderDetailDialog from '../components/OrderDetailDialog.jsx'
 import { listOrders, deleteOrders, supabaseEnabled } from '../lib/supabase.js'
 import { toast } from '../components/Toast.jsx'
 import { money } from '../lib/pango.js'
@@ -55,6 +56,7 @@ export default function ManageOrders({ onNavigate }) {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(new Set()) // order_id đã tick
   const [page, setPage] = useState(1)
+  const [detailId, setDetailId] = useState(null) // đơn đang mở dialog chi tiết
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
 
@@ -244,11 +246,12 @@ export default function ManageOrders({ onNavigate }) {
                   return (
                     <tr
                       key={o.order_id}
-                      className={`border-b border-line last:border-0 transition-colors hover:bg-card2/60 ${
+                      onClick={() => setDetailId(o.order_id)}
+                      className={`cursor-pointer border-b border-line last:border-0 transition-colors hover:bg-card2/60 ${
                         checked ? 'bg-accent/5' : ''
                       }`}
                     >
-                      <td className={td}>
+                      <td className={td} onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           ariaLabel={`Chọn đơn ${o.order_code}`}
                           checked={checked}
@@ -320,6 +323,8 @@ export default function ManageOrders({ onNavigate }) {
           </Pagination.Content>
         </Pagination>
       )}
+
+      {detailId && <OrderDetailDialog orderId={detailId} onClose={() => setDetailId(null)} />}
     </div>
   )
 }

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Popover, Dropdown, Label, Button as HButton } from '@heroui/react'
+import { Popover } from '@heroui/react'
 import { Card, Field, TextInput, Button } from './ui.jsx'
 import { ProductPicker } from './ProductPicker.jsx'
+import { SelectMenu } from './SelectMenu.jsx'
 import { toast } from './Toast.jsx'
 import { searchProductsByCode, searchProductsByName, getAllCategories } from '../lib/supabase.js'
-import { money, lineTotal, discountAmount } from '../lib/pango.js'
+import { money, lineTotal, lineDiscount, lineNet, discountAmount } from '../lib/pango.js'
 
 const EMPTY_ROW = { pid: '', pname: '', price: '', qty: '1' }
 
@@ -25,9 +26,8 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
   }, [])
 
   // Đổi danh mục -> reset Mã SP / Tên SP / Đơn giá / Số lượng để tìm lại từ đầu.
-  const onSelectCategory = (keys) => {
-    const key = Array.from(keys)[0]
-    setCategory(!key || key === '__all__' ? '' : String(key))
+  const onSelectCategory = (v) => {
+    setCategory(v)
     setRow(EMPTY_ROW)
   }
 
@@ -44,11 +44,22 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
       return toast.danger('Thiếu thông tin sản phẩm', 'Nhập ít nhất Mã SP hoặc Tên sản phẩm.')
     if (isNaN(price) || price < 0) return alert('Đơn giá không hợp lệ.')
     if (isNaN(qty) || qty <= 0) return alert('Số lượng phải > 0.')
-    setProducts((p) => [...p, { pid, pname, price, qty }])
+    // discount: giá trị giảm; discountMode: 'vnd' | 'percent' — mặc định 0 (VND).
+    setProducts((p) => [...p, { pid, pname, price, qty, discount: '', discountMode: 'vnd' }])
     setRow(EMPTY_ROW)
   }
 
   const removeProduct = (i) => setProducts((p) => p.filter((_, idx) => idx !== i))
+
+  // Cập nhật giảm giá của 1 SP trong danh sách (DiscountEditor gọi setDiscount(updater)).
+  const updateDiscount = (i, updater) =>
+    setProducts((arr) =>
+      arr.map((p, idx) => {
+        if (idx !== i) return p
+        const next = updater({ mode: p.discountMode || 'vnd', value: p.discount ?? '' })
+        return { ...p, discountMode: next.mode, discount: next.value }
+      }),
+    )
 
   const onAddKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -57,7 +68,7 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
     }
   }
 
-  const grand = products.reduce((s, p) => s + lineTotal(p), 0)
+  const grand = products.reduce((s, p) => s + lineNet(p), 0)
   const th = 'border border-line bg-card2 px-[9px] py-[7px] text-left text-xs font-semibold text-muted'
   const td = 'border border-line px-[9px] py-[7px]'
   const tdNum = `${td} text-right tabular-nums`
@@ -73,6 +84,7 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
             <th className={th}>Tên sản phẩm</th>
             <th className={`${th} text-right`}>Đơn giá</th>
             <th className={`${th} text-right`}>Số lượng</th>
+            <th className={`${th} text-right`}>Giảm giá</th>
             <th className={`${th} text-right`}>Thành tiền</th>
             <th className={`${th} w-[36px]`}></th>
           </tr>
@@ -80,7 +92,7 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
         <tbody>
           {products.length === 0 ? (
             <tr>
-              <td className={`${td} p-4 text-center text-muted`} colSpan={7}>
+              <td className={`${td} p-4 text-center text-muted`} colSpan={8}>
                 Chưa có sản phẩm — thêm ở ô bên dưới.
               </td>
             </tr>
@@ -92,7 +104,23 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
                 <td className={td}>{p.pname || '—'}</td>
                 <td className={tdNum}>{money(p.price)}</td>
                 <td className={tdNum}>{p.qty}</td>
-                <td className={tdNum}>{money(lineTotal(p))}</td>
+                <td className={tdNum}>
+                  <Popover>
+                    <Popover.Trigger className="cursor-pointer tabular-nums underline decoration-dotted decoration-line underline-offset-4 hover:text-accent">
+                      {money(lineDiscount(p))}
+                    </Popover.Trigger>
+                    <Popover.Content className="z-50 rounded-lg border border-line bg-card p-3 shadow-lg">
+                      <Popover.Dialog className="outline-none">
+                        <DiscountEditor
+                          discount={{ mode: p.discountMode || 'vnd', value: p.discount ?? '' }}
+                          setDiscount={(updater) => updateDiscount(i, updater)}
+                          grand={lineTotal(p)}
+                        />
+                      </Popover.Dialog>
+                    </Popover.Content>
+                  </Popover>
+                </td>
+                <td className={tdNum}>{money(lineNet(p))}</td>
                 <td className={td}>
                   <button
                     className="cursor-pointer border-none bg-transparent px-1 text-base text-err hover:opacity-70"
@@ -114,33 +142,12 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
         onKeyDown={onAddKeyDown}
       >
         <Field label="Danh mục">
-          <Dropdown>
-            <HButton
-              aria-label="Danh mục"
-              className="flex w-full items-center justify-between rounded-lg border border-line bg-card2 px-[9px] py-[6px] text-[13px] text-txt outline-none focus:border-accent"
-            >
-              <span className={category ? 'text-txt' : 'text-muted/70'}>{category || 'Tất cả'}</span>
-              <span className="ml-2 text-muted">▾</span>
-            </HButton>
-            <Dropdown.Popover className="min-w-[200px]">
-              <Dropdown.Menu
-                selectedKeys={new Set([category || '__all__'])}
-                selectionMode="single"
-                onSelectionChange={onSelectCategory}
-              >
-                <Dropdown.Item id="__all__" textValue="Tất cả">
-                  <Dropdown.ItemIndicator />
-                  <Label>Tất cả</Label>
-                </Dropdown.Item>
-                {categories.map((c) => (
-                  <Dropdown.Item key={c} id={c} textValue={c}>
-                    <Dropdown.ItemIndicator />
-                    <Label>{c}</Label>
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown.Popover>
-          </Dropdown>
+          <SelectMenu
+            size="sm"
+            value={category}
+            onChange={onSelectCategory}
+            options={[{ value: '', label: 'Tất cả' }, ...categories.map((c) => ({ value: c, label: c }))]}
+          />
         </Field>
         <Field label="Mã SP">
           <ProductPicker
