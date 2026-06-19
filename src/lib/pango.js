@@ -72,7 +72,6 @@ export function buildPayload(cfg, customer, products, discount = {}) {
   addT('customField05', customer.orderStatus) // orderStatus
   addT('customField06', customer.email) // customerEmail
   addT('customField10', customer.address) // địa chỉ (số nhà, đường...)
-  addT('customField11', customer.district) // quận/huyện
   addT('customField12', customer.ward) // phường/xã
   addT('customField13', customer.province) // tỉnh/thành phố
 

@@ -1,15 +1,13 @@
 // ============================================================
-//  Danh mục hành chính VN (3 cấp) từ Province Open API.
+//  Danh mục hành chính VN (2 cấp, từ 01/07/2025) — Province Open API v2.
 //  Nguồn miễn phí, không cần key, hỗ trợ CORS (gọi trực tiếp từ browser).
-//    GET /api/v1/p/              -> danh sách Tỉnh/Thành
-//    GET /api/v1/p/{code}?depth=2 -> 1 Tỉnh kèm mảng districts (Quận/Huyện)
-//    GET /api/v1/d/{code}?depth=2 -> 1 Quận/Huyện kèm mảng wards (Phường/Xã)
+//    GET /api/v2/p/              -> danh sách Tỉnh/Thành (34 đơn vị)
+//    GET /api/v2/p/{code}?depth=2 -> 1 Tỉnh kèm mảng wards (Phường/Xã) — đã bỏ cấp Quận/Huyện
 //  Có cache trong RAM để không gọi lại nhiều lần.
 // ============================================================
-const BASE = 'https://provinces.open-api.vn/api/v1'
+const BASE = 'https://provinces.open-api.vn/api/v2'
 
 let _provinces = null
-const _districtCache = new Map()
 const _wardCache = new Map()
 
 async function getJson(url, errMsg) {
@@ -25,23 +23,12 @@ export async function getProvinces() {
   return _provinces
 }
 
-// Quận/Huyện theo mã tỉnh: [{ code, name, ... }]
-export async function getDistricts(provinceCode) {
+// Phường/Xã theo mã tỉnh: [{ code, name, ... }] (2 cấp -> ward nằm trực tiếp dưới tỉnh)
+export async function getWards(provinceCode) {
   if (!provinceCode) return []
   const key = String(provinceCode)
-  if (_districtCache.has(key)) return _districtCache.get(key)
-  const data = await getJson(`${BASE}/p/${key}?depth=2`, 'Không tải được Quận/Huyện')
-  const list = data.districts || []
-  _districtCache.set(key, list)
-  return list
-}
-
-// Phường/Xã theo mã quận/huyện: [{ code, name, ... }]
-export async function getWards(districtCode) {
-  if (!districtCode) return []
-  const key = String(districtCode)
   if (_wardCache.has(key)) return _wardCache.get(key)
-  const data = await getJson(`${BASE}/d/${key}?depth=2`, 'Không tải được Phường/Xã')
+  const data = await getJson(`${BASE}/p/${key}?depth=2`, 'Không tải được Phường/Xã')
   const list = data.wards || []
   _wardCache.set(key, list)
   return list

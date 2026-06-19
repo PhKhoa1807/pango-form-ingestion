@@ -13,7 +13,6 @@ const REQUIRED_FIELDS = [
   ['name', 'Tên khách hàng'],
   ['address', 'Địa chỉ'],
   ['province', 'Tỉnh/Thành phố'],
-  ['district', 'Quận/Huyện'],
   ['ward', 'Phường/Xã'],
 ]
 const getMissing = (c) => REQUIRED_FIELDS.filter(([k]) => !String(c[k] ?? '').trim()).map(([k]) => k)
@@ -97,10 +96,10 @@ export default function CreateOrder({ cfg }) {
     <div className="grid gap-[18px]">
       <div>
         <h1 className="mb-1 text-xl font-bold">🧾 Tạo đơn hàng</h1>
-        {/* <p className="m-0 text-[13px] text-muted">
+        <p className="m-0 text-[13px] text-muted">
           Form nhập tay → gọi API Pango ingest vào Model{' '}
           <code className="rounded bg-card2 px-[6px] py-px text-xs">{cfg.momCode}</code>
-        </p> */}
+        </p>
       </div>
 
       <CustomerForm customer={customer} setCustomer={setCustomer} invalid={invalid} />

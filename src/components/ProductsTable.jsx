@@ -163,7 +163,14 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
           />
         </Field>
         <Field label="Đơn giá">
-          <TextInput size="sm" type="number" value={row.price} onChange={upd('price')} placeholder="120" />
+          <TextInput
+            size="sm"
+            type="text"
+            value={row.price === '' ? '' : money(row.price)}
+            onChange={upd('price')}
+            placeholder="120.000"
+            readOnly
+          />
         </Field>
         <Field label="Số lượng">
           <TextInput size="sm" type="number" value={row.qty} onChange={upd('qty')} placeholder="1" />
@@ -228,12 +235,24 @@ function DiscountEditor({ discount, setDiscount, grand }) {
       return { mode, value }
     })
 
-  // Nhập số: ở chế độ % thì chặn vượt 100.
+  // VND: chỉ giữ chữ số (value lưu số thô, hiển thị mới chèn dấu chấm nghìn).
+  // %  : cho phép thập phân, chặn vượt 100.
   const onValueChange = (e) => {
     let raw = e.target.value
-    if (discount.mode === 'percent' && raw !== '' && Number(raw) > 100) raw = '100'
+    if (discount.mode === 'vnd') {
+      raw = raw.replace(/\D/g, '')
+    } else {
+      raw = raw.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1') // bỏ ký tự lạ + chỉ 1 dấu chấm
+      if (raw !== '' && Number(raw) > 100) raw = '100'
+    }
     setDiscount((d) => ({ ...d, value: raw }))
   }
+
+  // Giá trị hiển thị: VND -> chèn dấu chấm nghìn; % -> giữ nguyên (kể cả đang gõ dở "2.").
+  const displayValue =
+    discount.mode === 'vnd' && discount.value !== ''
+      ? Number(discount.value).toLocaleString('vi-VN')
+      : discount.value
 
   const unitBtn = (active) =>
     `px-3 py-[5px] text-[13px] font-semibold transition-colors ${
@@ -243,11 +262,10 @@ function DiscountEditor({ discount, setDiscount, grand }) {
     <div className="flex items-center gap-2">
       <span className="whitespace-nowrap text-[13px] font-semibold">Giảm giá</span>
       <input
-        type="number"
-        min="0"
-        max={discount.mode === 'percent' ? 100 : undefined}
+        type="text"
+        inputMode={discount.mode === 'vnd' ? 'numeric' : 'decimal'}
         autoFocus
-        value={discount.value}
+        value={displayValue}
         onChange={onValueChange}
         className="w-[90px] border-0 border-b-2 border-accent bg-transparent px-1 py-[3px] text-right tabular-nums text-txt outline-none"
         placeholder="0"

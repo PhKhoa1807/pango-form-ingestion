@@ -30,3 +30,12 @@ body {
   /* Montserrat mảnh hơn Segoe UI -> nâng weight nền lên 500 cho chữ rõ, đỡ nhạt */
   font-weight: 500;
 }
+
+/* Ẩn thanh cuộn toàn app (vẫn cuộn được bằng chuột/touchpad/phím). */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge cũ */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge Chromium */
+}

@@ -7,7 +7,7 @@ import {
   nextOrderCode,
   supabaseEnabled,
 } from '../lib/supabase.js'
-import { getProvinces, getDistricts, getWards } from '../lib/provinces.js'
+import { getProvinces, getWards } from '../lib/provinces.js'
 
 // Form thông tin khách hàng & đơn.
 export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
@@ -15,12 +15,11 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
   const upd = (k) => (e) => setCustomer((c) => ({ ...c, [k]: e.target.value }))
   const [lookup, setLookup] = useState(null) // { type: 'loading'|'found'|'new'|'error', msg }
 
-  // ---- Địa chỉ 3 cấp (Province Open API) ----
+  // ---- Địa chỉ 2 cấp (Province Open API v2): Tỉnh/Thành -> Phường/Xã ----
   // Mã chọn (chỉ dùng để cascade, không lưu DB) tách khỏi tên (lưu vào customer).
   const [provinces, setProvinces] = useState([])
-  const [districts, setDistricts] = useState([])
   const [wards, setWards] = useState([])
-  const [geo, setGeo] = useState({ provinceCode: '', districtCode: '', wardCode: '' })
+  const [geo, setGeo] = useState({ provinceCode: '', wardCode: '' })
   const [geoErr, setGeoErr] = useState('')
 
   // Tải danh sách Tỉnh/Thành 1 lần khi mở form.
@@ -47,31 +46,16 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
 
   // Form bị reset từ ngoài (gửi xong / xóa form) -> dọn dropdown địa chỉ.
   useEffect(() => {
-    if (!customer.province && !customer.district && !customer.ward) {
-      setGeo({ provinceCode: '', districtCode: '', wardCode: '' })
-      setDistricts([])
+    if (!customer.province && !customer.ward) {
+      setGeo({ provinceCode: '', wardCode: '' })
       setWards([])
     }
-  }, [customer.province, customer.district, customer.ward])
+  }, [customer.province, customer.ward])
 
   const onProvinceChange = async (code, name) => {
-    setGeo({ provinceCode: code, districtCode: '', wardCode: '' })
-    setDistricts([])
+    setGeo({ provinceCode: code, wardCode: '' })
     setWards([])
-    setCustomer((c) => ({ ...c, province: name, district: '', ward: '' }))
-    if (code) {
-      try {
-        setDistricts(await getDistricts(code))
-      } catch (err) {
-        setGeoErr(err.message)
-      }
-    }
-  }
-
-  const onDistrictChange = async (code, name) => {
-    setGeo((g) => ({ ...g, districtCode: code, wardCode: '' }))
-    setWards([])
-    setCustomer((c) => ({ ...c, district: name, ward: '' }))
+    setCustomer((c) => ({ ...c, province: name, ward: '' }))
     if (code) {
       try {
         setWards(await getWards(code))
@@ -86,27 +70,22 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
     setCustomer((c) => ({ ...c, ward: name }))
   }
 
-  // Khách cũ có sẵn tên Tỉnh/Huyện/Xã -> dò ngược ra mã để chọn lại trên dropdown.
-  const reselectGeo = async (provinceName, districtName, wardName) => {
+  // Khách cũ có sẵn tên Tỉnh/Xã -> dò ngược ra mã để chọn lại trên dropdown.
+  const reselectGeo = async (provinceName, wardName) => {
     try {
       if (!provinceName) {
-        setGeo({ provinceCode: '', districtCode: '', wardCode: '' })
-        setDistricts([])
+        setGeo({ provinceCode: '', wardCode: '' })
         setWards([])
         return
       }
       const ps = await getProvinces()
       const p = ps.find((x) => x.name === provinceName)
       if (!p) return
-      const ds = await getDistricts(p.code)
-      setDistricts(ds)
-      const d = ds.find((x) => x.name === districtName)
-      const ws = d ? await getWards(d.code) : []
+      const ws = await getWards(p.code)
       setWards(ws)
       const w = ws.find((x) => x.name === wardName)
       setGeo({
         provinceCode: String(p.code),
-        districtCode: d ? String(d.code) : '',
         wardCode: w ? String(w.code) : '',
       })
     } catch (err) {
@@ -134,10 +113,9 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
           cusid: found.customer_code || '',
           address: found.address || '',
           province: found.province || '',
-          district: found.district || '',
           ward: found.ward || '',
         }))
-        reselectGeo(found.province, found.district, found.ward) // chọn lại dropdown địa chỉ
+        reselectGeo(found.province, found.ward) // chọn lại dropdown địa chỉ
         setLookup({ type: 'found', msg: `✅ Đã có khách: ${found.name} — tự điền thông tin.` })
       } else {
         const cusid = await nextCustomerCode() // khách mới -> mã KH kế tiếp
@@ -149,12 +127,10 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
           email: '',
           address: '',
           province: '',
-          district: '',
           ward: '',
           cusid,
         }))
-        setGeo({ provinceCode: '', districtCode: '', wardCode: '' })
-        setDistricts([])
+        setGeo({ provinceCode: '', wardCode: '' })
         setWards([])
         setLookup({ type: 'new', msg: `🆕 Khách mới — cấp mã ${cusid}.` })
       }
@@ -194,7 +170,7 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
           <TextInput size="sm" value={customer.email} onChange={upd('email')} placeholder="a@example.com" />
         </Field>
         <Field label="Mã đơn hàng">
-          <TextInput size="sm" value={customer.orderId} onChange={upd('orderId')} placeholder="DH-0001" readOnly />
+          <TextInput size="sm" value={customer.orderId} onChange={upd('orderId')} readOnly />
         </Field>
         <Field label="Địa chỉ" required error={isInvalid('address')}>
           <TextInput
@@ -213,23 +189,13 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
             placeholder="Gõ hoặc chọn Tỉnh/Thành"
           />
         </Field>
-        <Field label="Quận / Huyện" required error={isInvalid('district')}>
-          <Combobox
-            size="sm"
-            value={geo.districtCode}
-            onChange={onDistrictChange}
-            options={districts}
-            disabled={!geo.provinceCode}
-            placeholder="Gõ hoặc chọn Quận/Huyện"
-          />
-        </Field>
         <Field label="Phường / Xã" required error={isInvalid('ward')}>
           <Combobox
             size="sm"
             value={geo.wardCode}
             onChange={onWardChange}
             options={wards}
-            disabled={!geo.districtCode}
+            disabled={!geo.provinceCode}
             placeholder="Gõ hoặc chọn Phường/Xã"
           />
         </Field>
