@@ -1,27 +1,35 @@
-import { useState } from 'react'
-import { Popover } from '@heroui/react'
+import { useEffect, useState } from 'react'
+import { Popover, Dropdown, Label, Button as HButton } from '@heroui/react'
 import { Card, Field, TextInput, Button } from './ui.jsx'
 import { ProductPicker } from './ProductPicker.jsx'
 import { toast } from './Toast.jsx'
-import { searchProductsByCode, searchProductsByName } from '../lib/supabase.js'
-import { money, lineTotal } from '../lib/pango.js'
+import { searchProductsByCode, searchProductsByName, getAllCategories } from '../lib/supabase.js'
+import { money, lineTotal, discountAmount } from '../lib/pango.js'
 
 const EMPTY_ROW = { pid: '', pname: '', price: '', qty: '1' }
 
-export const clamp = (n, min, max) => Math.min(Math.max(n, min), max)
 const round2 = (n) => Math.round(n * 100) / 100
-
-// Quy đổi giảm giá -> số tiền giảm (đồng), không vượt quá tổng tiền hàng.
-export function discountAmount(discount, grand) {
-  const v = Number(discount.value) || 0
-  if (discount.mode === 'percent') return Math.round((grand * clamp(v, 0, 100)) / 100)
-  return clamp(v, 0, grand)
-}
 
 // Bảng sản phẩm trong đơn + hàng nhập sản phẩm mới.
 export default function ProductsTable({ products, setProducts, discount, setDiscount }) {
   const [row, setRow] = useState(EMPTY_ROW)
+  const [category, setCategory] = useState('') // danh mục lọc Mã SP / Tên SP ('' = tất cả)
+  const [categories, setCategories] = useState([])
   const upd = (k) => (e) => setRow((r) => ({ ...r, [k]: e.target.value }))
+
+  // Nạp danh sách danh mục cho dropdown (1 lần khi mở form).
+  useEffect(() => {
+    getAllCategories()
+      .then(setCategories)
+      .catch(() => setCategories([]))
+  }, [])
+
+  // Đổi danh mục -> reset Mã SP / Tên SP / Đơn giá / Số lượng để tìm lại từ đầu.
+  const onSelectCategory = (keys) => {
+    const key = Array.from(keys)[0]
+    setCategory(!key || key === '__all__' ? '' : String(key))
+    setRow(EMPTY_ROW)
+  }
 
   // Chọn 1 sản phẩm từ danh mục -> tự điền mã + tên + đơn giá (giữ nguyên số lượng).
   const onPickProduct = (p) =>
@@ -102,15 +110,44 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
 
       {/* Hàng nhập sản phẩm mới */}
       <div
-        className="mt-[14px] grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_1.6fr_1fr_0.8fr_auto]"
+        className="mt-[14px] grid grid-cols-2 items-end gap-2 sm:grid-cols-[0.9fr_1fr_1.6fr_1fr_0.8fr_auto]"
         onKeyDown={onAddKeyDown}
       >
+        <Field label="Danh mục">
+          <Dropdown>
+            <HButton
+              aria-label="Danh mục"
+              className="flex w-full items-center justify-between rounded-lg border border-line bg-card2 px-[9px] py-[6px] text-[13px] text-txt outline-none focus:border-accent"
+            >
+              <span className={category ? 'text-txt' : 'text-muted/70'}>{category || 'Tất cả'}</span>
+              <span className="ml-2 text-muted">▾</span>
+            </HButton>
+            <Dropdown.Popover className="min-w-[200px]">
+              <Dropdown.Menu
+                selectedKeys={new Set([category || '__all__'])}
+                selectionMode="single"
+                onSelectionChange={onSelectCategory}
+              >
+                <Dropdown.Item id="__all__" textValue="Tất cả">
+                  <Dropdown.ItemIndicator />
+                  <Label>Tất cả</Label>
+                </Dropdown.Item>
+                {categories.map((c) => (
+                  <Dropdown.Item key={c} id={c} textValue={c}>
+                    <Dropdown.ItemIndicator />
+                    <Label>{c}</Label>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
+        </Field>
         <Field label="Mã SP">
           <ProductPicker
             size="sm"
             value={row.pid}
             onChange={(v) => setRow((r) => ({ ...r, pid: v }))}
-            search={searchProductsByCode}
+            search={(q) => searchProductsByCode(q, category)}
             onPick={onPickProduct}
             placeholder="Gõ mã SP để tìm..."
           />
@@ -120,7 +157,7 @@ export default function ProductsTable({ products, setProducts, discount, setDisc
             size="sm"
             value={row.pname}
             onChange={(v) => setRow((r) => ({ ...r, pname: v }))}
-            search={searchProductsByName}
+            search={(q) => searchProductsByName(q, category)}
             onPick={onPickProduct}
             placeholder="Gõ tên SP để tìm..."
           />

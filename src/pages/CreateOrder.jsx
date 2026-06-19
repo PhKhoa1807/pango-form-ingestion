@@ -35,7 +35,7 @@ export default function CreateOrder({ cfg }) {
   }, [customer, triedSubmit])
 
   const handlePreview = () => {
-    setPayload(buildPayload(cfg, customer, products))
+    setPayload(buildPayload(cfg, customer, products, discount))
   }
 
   const handleExecute = async () => {
@@ -48,7 +48,7 @@ export default function CreateOrder({ cfg }) {
     setInvalid([])
     if (!products.length) return alert('Đơn phải có ít nhất 1 sản phẩm.')
 
-    const p = buildPayload(cfg, customer, products)
+    const p = buildPayload(cfg, customer, products, discount)
     setPayload(p)
     setBusy(true)
     setResult({ statusMsg: '⏳ Đang lấy token & gửi dữ liệu...' })

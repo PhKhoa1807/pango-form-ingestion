@@ -8,12 +8,25 @@
 const TOKEN_HEADER = 'AccessToken' // Pango v2.0: AccessToken: Bearer <token>
 const OBJECT_TYPE = 'custom-model'
 
+// Mã hệ thống các field list bên Pango (KHÔNG phải tên hiển thị).
+const FIELD_PRODUCT_NAME_LIST = 'customFieldList01' // productNameList
+const FIELD_PRODUCT_ID_LIST = 'customFieldList02' // productIdList
+
 // Đường dẫn qua proxy Vite -> Pango
 const AUTH_PATH = '/api-auth/api/v1.0/auth-app' // + /{orgId}/authen
 const INGEST_PATH = '/api-ingest/dhub-i/api/v2.0/ingest'
 
 export const lineTotal = (p) => (Number(p.price) || 0) * (Number(p.qty) || 0)
 export const money = (n) => (Number(n) || 0).toLocaleString('vi-VN')
+
+export const clamp = (n, min, max) => Math.min(Math.max(n, min), max)
+
+// Quy đổi giảm giá -> số tiền giảm (đồng), không vượt quá tổng tiền hàng.
+export function discountAmount(discount, grand) {
+  const v = Number(discount?.value) || 0
+  if (discount?.mode === 'percent') return Math.round((grand * clamp(v, 0, 100)) / 100)
+  return clamp(v, 0, grand)
+}
 
 // ---- Lấy token ngầm (đổi refreshToken -> accessToken) ----
 export async function fetchToken(cfg) {
@@ -37,11 +50,15 @@ export async function fetchToken(cfg) {
   return tok
 }
 
-// ---- Build payload: mỗi sản phẩm = 1 record ----
-export function buildPayload(cfg, customer, products) {
+// ---- Build payload: 1 đơn = 1 record (tên/mã SP gom thành list) ----
+export function buildPayload(cfg, customer, products, discount = {}) {
   const now = Date.now()
   const orderId = customer.orderId.trim()
   const orderTs = now // ngày giờ đặt đơn = thời điểm bấm đẩy lên Pango
+
+  // Tổng đơn = tổng tiền hàng - giảm giá (số khách cần trả).
+  const grand = products.reduce((s, p) => s + lineTotal(p), 0)
+  const orderTotal = grand - discountAmount(discount, grand)
 
   const baseTexts = {}
   const addT = (k, v) => {
@@ -59,24 +76,26 @@ export function buildPayload(cfg, customer, products) {
   addT('customField12', customer.ward) // phường/xã
   addT('customField13', customer.province) // tỉnh/thành phố
 
-  const entries = products.map((p, i) => {
-    const texts = { ...baseTexts }
-    if (p.pname) texts.customField07 = p.pname // productName
-    if (p.pid) texts.customField08 = p.pid // productId
-    texts.customField09 = String(lineTotal(p)) // TotalCost = thành tiền dòng
-    return {
-      momCode: cfg.momCode.trim(),
-      refId: orderId + '-' + (p.pid || i + 1), // refId duy nhất mỗi SP
-      customFieldTexts: texts,
-      customFieldLongs: { customFieldLong01: Number(p.price), customFieldLong02: Number(p.qty) },
-      customFieldTimestamps: { customFieldTimestamp01: orderTs },
-      createdAt: now,
-      updatedAt: now,
-      recordStatus: 'Active',
-    }
-  })
+  // Danh sách tất cả SP trong đơn -> field list multi-value.
+  const productNameList = products.map((p) => p.pname?.trim()).filter(Boolean)
+  const productIdList = products.map((p) => p.pid?.trim()).filter(Boolean)
+  const listTexts = {}
+  if (productNameList.length) listTexts[FIELD_PRODUCT_NAME_LIST] = productNameList
+  if (productIdList.length) listTexts[FIELD_PRODUCT_ID_LIST] = productIdList
 
-  return { objectType: OBJECT_TYPE, source: cfg.source.trim(), entries }
+  // 1 record cho cả đơn. refId = mã đơn -> trùng mã đơn thì ghi đè, không tạo bản trùng.
+  const entry = {
+    momCode: cfg.momCode.trim(),
+    refId: orderId,
+    customFieldTexts: { ...baseTexts, customField09: String(orderTotal) }, // cf09 = tổng đơn
+    customFieldTimestamps: { customFieldTimestamp01: orderTs },
+    ...(Object.keys(listTexts).length && { customFieldListTexts: listTexts }),
+    createdAt: now,
+    updatedAt: now,
+    recordStatus: 'Active',
+  }
+
+  return { objectType: OBJECT_TYPE, source: cfg.source.trim(), entries: [entry] }
 }
 
 // ---- Push lên Pango: tự lấy token rồi ingest ----

@@ -30,6 +30,21 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
       .catch((e) => setGeoErr(e.message))
   }, [])
 
+  // Mở form / sau khi reset (orderId rỗng) -> luôn sinh 1 Mã đơn MỚI,
+  // độc lập với SĐT (không phụ thuộc khách cũ hay mới).
+  useEffect(() => {
+    if (!supabaseEnabled || customer.orderId) return
+    let alive = true
+    nextOrderCode()
+      .then((code) => {
+        if (alive) setCustomer((c) => (c.orderId ? c : { ...c, orderId: code }))
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [customer.orderId, setCustomer])
+
   // Form bị reset từ ngoài (gửi xong / xóa form) -> dọn dropdown địa chỉ.
   useEffect(() => {
     if (!customer.province && !customer.district && !customer.ward) {
@@ -99,9 +114,10 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
     }
   }
 
-  // Rời ô SĐT -> tra trong DB:
-  //  - Khách cũ: tự điền thông tin + dùng lại Mã KH; Mã đơn luôn sinh mới (đơn mới).
-  //  - Khách mới: sinh Mã KH mới (lấy mã cuối + 1); Mã đơn cũng sinh mới.
+  // Rời ô SĐT -> tra trong DB (chỉ autofill thông tin khách + Mã KH).
+  //  Mã đơn KHÔNG sinh ở đây — đã sinh sẵn khi mở form (luôn mới, độc lập SĐT).
+  //  - Khách cũ: tự điền thông tin + dùng lại Mã KH.
+  //  - Khách mới: sinh Mã KH mới (lấy mã cuối + 1).
   const onPhoneBlur = async () => {
     const phone = customer.phone?.trim()
     if (!phone) return setLookup(null)
@@ -110,7 +126,6 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
     setLookup({ type: 'loading', msg: '⏳ Đang kiểm tra số điện thoại...' })
     try {
       const found = await findCustomerByPhone(phone)
-      const orderId = await nextOrderCode() // mỗi đơn là 1 mã DH mới
       if (found) {
         setCustomer((c) => ({
           ...c,
@@ -121,14 +136,13 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
           province: found.province || '',
           district: found.district || '',
           ward: found.ward || '',
-          orderId,
         }))
         reselectGeo(found.province, found.district, found.ward) // chọn lại dropdown địa chỉ
         setLookup({ type: 'found', msg: `✅ Đã có khách: ${found.name} — tự điền thông tin.` })
       } else {
         const cusid = await nextCustomerCode() // khách mới -> mã KH kế tiếp
         // Khách mới: xóa trắng thông tin của khách cũ (nếu trước đó đã autofill),
-        // chỉ giữ SĐT vừa nhập + mã KH/đơn tự sinh.
+        // chỉ giữ SĐT vừa nhập + mã KH tự sinh (giữ nguyên Mã đơn đã sinh sẵn).
         setCustomer((c) => ({
           ...c,
           name: '',
@@ -138,12 +152,11 @@ export default function CustomerForm({ customer, setCustomer, invalid = [] }) {
           district: '',
           ward: '',
           cusid,
-          orderId,
         }))
         setGeo({ provinceCode: '', districtCode: '', wardCode: '' })
         setDistricts([])
         setWards([])
-        setLookup({ type: 'new', msg: `🆕 Khách mới — cấp mã ${cusid}, đơn ${orderId}.` })
+        setLookup({ type: 'new', msg: `🆕 Khách mới — cấp mã ${cusid}.` })
       }
     } catch (e) {
       setLookup({ type: 'error', msg: '⚠️ ' + e.message })
