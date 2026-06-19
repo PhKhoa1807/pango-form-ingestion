@@ -4,6 +4,7 @@ import { MENU } from './nav.js'
 import Sidebar from './components/Sidebar.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import CreateOrder from './pages/CreateOrder.jsx'
+import ManageOrders from './pages/ManageOrders.jsx'
 import Settings from './pages/Settings.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import { ToastHost } from './components/Toast.jsx'
@@ -35,6 +36,8 @@ export default function App() {
     switch (view) {
       case 'create-order':
         return <CreateOrder cfg={cfg} />
+      case 'manage-orders':
+        return <ManageOrders onNavigate={setView} />
       case 'settings':
         return <Settings cfg={cfg} setCfg={setCfg} onSave={saveCfg} />
       case 'dashboard':

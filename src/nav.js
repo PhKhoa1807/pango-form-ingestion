@@ -21,7 +21,7 @@ export const MENU = [
     title: 'Quản lý đơn hàng',
     icon: '📋',
     desc: 'Xem & tra cứu các đơn đã tạo',
-    ready: false,
+    ready: true,
   },
   {
     key: 'manage-products',

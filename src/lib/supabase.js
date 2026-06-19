@@ -125,6 +125,27 @@ export const searchProductsByCode = (q, category = '') => searchProducts('code',
 // Search theo Tên sản phẩm (lọc theo category nếu có)
 export const searchProductsByName = (q, category = '') => searchProducts('name', q, category)
 
+// ---- Danh sách đơn hàng (cho trang Quản lý đơn hàng) ----
+// Lấy từ view order_summary (đã gồm tên/mã KH + tổng tiền hàng), mới nhất trước.
+export async function listOrders({ limit = 300 } = {}) {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('order_summary')
+    .select('order_id, order_code, status, order_date, total_amount, customer_name, customer_code')
+    .order('order_date', { ascending: false })
+    .limit(limit)
+  if (error) throw new Error('Tải danh sách đơn lỗi: ' + error.message)
+  return data || []
+}
+
+// ---- Xóa nhiều đơn hàng theo id (order_items tự xóa theo cascade) ----
+export async function deleteOrders(ids = []) {
+  if (!supabase) throw new Error('Chưa cấu hình Supabase.')
+  if (!ids.length) return
+  const { error } = await supabase.from('orders').delete().in('id', ids)
+  if (error) throw new Error('Xóa đơn lỗi: ' + error.message)
+}
+
 // ---- Lưu 1 đơn (khách + đơn + sản phẩm) vào Supabase ----
 // Trả về { order_id } khi thành công, ném lỗi khi thất bại.
 export async function saveOrderToSupabase(customer, products, discount = null) {
